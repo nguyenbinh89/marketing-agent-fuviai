@@ -1,0 +1,17 @@
+target-version = "py312"
+line-length = 100
+
+[lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = [
+    "E501",   # line-too-long (handled by formatter)
+    "B008",   # do not perform function calls in default arguments (FastAPI pattern)
+    "UP007",  # use X | Y for type hints (requires Python 3.10+, but we keep explicit)
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["B", "E711", "F811"]
+
+[format]
+quote-style = "double"
+indent-style = "space"

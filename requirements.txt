@@ -1,0 +1,56 @@
+# ═══════════════════════════════════════════
+# FuviAI Marketing Agent — Requirements
+# Python 3.12+
+# ═══════════════════════════════════════════
+
+# Core AI / LLM
+anthropic>=0.40.0
+langchain>=0.3.0
+langchain-anthropic>=0.3.0
+langgraph>=0.2.0
+langchain-community>=0.3.0
+
+# API Framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+python-multipart>=0.0.12
+
+# Database
+psycopg2-binary>=2.9.10
+sqlalchemy>=2.0.36
+alembic>=1.14.0
+
+# Cache / Task Queue
+redis>=5.2.0
+celery>=5.4.0
+
+# Vector DB
+chromadb>=0.5.20
+
+# NLP tiếng Việt
+underthesea>=6.8.4
+
+# Web Scraping / Crawling
+playwright>=1.49.0
+beautifulsoup4>=4.12.3
+requests>=2.32.3
+httpx>=0.28.0
+lxml>=5.3.0
+
+# Config / Utils
+python-dotenv>=1.0.1
+pydantic>=2.10.0
+pydantic-settings>=2.7.0
+python-jose[cryptography]>=3.3.0
+
+# Logging / Monitoring
+loguru>=0.7.3
+
+# Dev / Test
+pytest>=8.3.0
+pytest-asyncio>=0.24.0
+pytest-cov>=6.0.0
+pytest-xdist>=3.6.0
+httpx>=0.28.0
+ruff>=0.8.0
+coverage>=7.6.0

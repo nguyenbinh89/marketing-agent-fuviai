@@ -1,0 +1,662 @@
+### FuviAI Marketing Agent — REST Client Tests
+### Dùng VS Code REST Client extension để chạy
+
+@base = 
+
+
+# ═══════════════════════════════════════════
+# HEALTH CHECK
+# ═══════════════════════════════════════════
+
+### Health
+GET {{base}}/health
+
+### Swagger Docs
+GET {{base}}/docs
+
+# ═══════════════════════════════════════════
+# AGENTS — Chat
+# ═══════════════════════════════════════════
+
+### Chat cơ bản
+POST {{base}}/api/agents/chat
+Content-Type: application/json
+
+{
+  "session_id": "test-session-1",
+  "message": "Tôi cần tư vấn chiến lược marketing cho cửa hàng bánh kem tại Hà Nội, budget 5 triệu/tháng"
+}
+
+###
+
+### Chat tiếp (có history)
+POST {{base}}/api/agents/chat
+Content-Type: application/json
+
+{
+  "session_id": "test-session-1",
+  "message": "Tập trung vào TikTok thì nên làm gì trước?"
+}
+
+###
+
+### Xem history
+GET {{base}}/api/agents/sessions/test-session-1/history
+
+###
+
+### Clear session
+DELETE {{base}}/api/agents/sessions/test-session-1
+
+# ═══════════════════════════════════════════
+# CONTENT — Generate
+# ═══════════════════════════════════════════
+
+### Facebook Caption
+POST {{base}}/api/content/generate/facebook
+Content-Type: application/json
+
+{
+  "product": "Phần mềm quản lý bán hàng FuviAI — tự động hoá 80% công việc thủ công",
+  "tone": "than_thien",
+  "target_audience": "chủ shop online, SME Việt Nam",
+  "key_benefit": "Tiết kiệm 3 giờ/ngày, tăng doanh thu 40%",
+  "cta": "Dùng thử miễn phí 14 ngày"
+}
+
+###
+
+### TikTok Script
+POST {{base}}/api/content/generate/tiktok
+Content-Type: application/json
+
+{
+  "product": "Phần mềm quản lý bán hàng FuviAI",
+  "duration": 60,
+  "hook_style": "câu hỏi gây tò mò"
+}
+
+###
+
+### Zalo Message
+POST {{base}}/api/content/generate/zalo
+Content-Type: application/json
+
+{
+  "product": "FuviAI Marketing Agent",
+  "customer_name": "Anh Minh",
+  "offer": "Giảm 30% gói 6 tháng trong tháng 3",
+  "urgency": "Còn 2 ngày"
+}
+
+###
+
+### Email Marketing AIDA
+POST {{base}}/api/content/generate/email
+Content-Type: application/json
+
+{
+  "product": "FuviAI Marketing Agent — AI tự động tạo content và phân tích campaign",
+  "target_segment": "giám đốc marketing SME Việt Nam",
+  "subject_style": "tạo tò mò + con số"
+}
+
+###
+
+### Campaign Content (nhiều platform)
+POST {{base}}/api/content/generate/campaign
+Content-Type: application/json
+
+{
+  "product": "FuviAI Marketing Agent",
+  "campaign_name": "Ra mắt tháng 3/2026",
+  "platforms": ["facebook", "zalo", "email"]
+}
+
+# ═══════════════════════════════════════════
+# RESEARCH — Market & Keywords
+# ═══════════════════════════════════════════
+
+### Báo cáo thị trường hàng ngày
+POST {{base}}/api/research/market-report
+Content-Type: application/json
+
+{
+  "industry": "công nghệ SaaS Việt Nam"
+}
+
+###
+
+### Nghiên cứu ngành F&B
+POST {{base}}/api/research/industry
+Content-Type: application/json
+
+{
+  "industry": "F&B Việt Nam",
+  "aspects": ["xu hướng 2026", "cơ hội TikTok", "đối thủ chính"]
+}
+
+###
+
+### Keyword Research
+POST {{base}}/api/research/keywords
+Content-Type: application/json
+
+{
+  "topic": "phần mềm quản lý bán hàng",
+  "industry": "SaaS",
+  "target_location": "TP.HCM và Hà Nội"
+}
+
+###
+
+### Tóm tắt URL
+POST {{base}}/api/research/summarize-url
+Content-Type: application/json
+
+{
+  "url": "https://vnexpress.net/kinh-doanh"
+}
+
+# ═══════════════════════════════════════════
+# SEO
+# ═══════════════════════════════════════════
+
+### Meta Tags
+POST {{base}}/api/research/seo/meta-tags
+Content-Type: application/json
+
+{
+  "page_title": "FuviAI Marketing Agent — AI Marketing tự động cho SME Việt Nam",
+  "page_description": "Phần mềm AI tự động tạo content, phân tích campaign, tối ưu SEO cho doanh nghiệp Việt Nam. ROI trung bình 4.2×",
+  "keywords": ["AI marketing Việt Nam", "phần mềm marketing tự động", "content AI tiếng Việt"],
+  "page_type": "product"
+}
+
+###
+
+### Content Outline
+POST {{base}}/api/research/seo/content-outline
+Content-Type: application/json
+
+{
+  "keyword": "AI marketing Việt Nam 2026",
+  "word_count": 2000,
+  "content_type": "blog"
+}
+
+###
+
+### Landing Page SEO Copy
+POST {{base}}/api/research/seo/landing-page
+Content-Type: application/json
+
+{
+  "product": "FuviAI Marketing Agent",
+  "target_keyword": "phần mềm AI marketing Việt Nam",
+  "usp": "Duy nhất hiểu tiếng Việt vùng miền, tích hợp Zalo OA và TikTok"
+}
+
+# ═══════════════════════════════════════════
+# ANALYTICS — Competitor Intelligence (Phase 3)
+# ═══════════════════════════════════════════
+
+### Dashboard đối thủ
+GET {{base}}/api/analytics/competitors
+
+###
+
+### Thêm đối thủ mới
+POST {{base}}/api/analytics/competitors/add
+Content-Type: application/json
+
+{
+  "name": "Haravan",
+  "website": "https://www.haravan.com",
+  "facebook_page": "haravan",
+  "industry": "ecommerce"
+}
+
+###
+
+### Chụp snapshot website đối thủ
+POST {{base}}/api/analytics/competitors/Haravan/snapshot
+
+###
+
+### Kiểm tra thay đổi
+GET {{base}}/api/analytics/competitors/Haravan/changes
+
+###
+
+### Phân tích sâu đối thủ
+POST {{base}}/api/analytics/competitors/Haravan/analyze?context=Vừa ra mắt gói mới giá thấp hơn FuviAI
+
+###
+
+### Counter-strategy khẩn cấp
+POST {{base}}/api/analytics/competitors/counter-strategy
+Content-Type: application/json
+
+{
+  "competitor_name": "Haravan",
+  "trigger_event": "Vừa giảm giá 30% tất cả gói, chạy TVC trên VTV",
+  "budget": 80000000,
+  "timeline_days": 7
+}
+
+###
+
+### Benchmark engagement rate
+POST {{base}}/api/analytics/competitors/benchmark-engagement
+Content-Type: application/json
+
+{
+  "fuviai_metrics": {"reach": 15000, "engagement": 450, "posts": 14},
+  "competitor_metrics": {
+    "Haravan": {"reach": 25000, "engagement": 600, "posts": 20},
+    "KiotViet": {"reach": 30000, "engagement": 500, "posts": 18}
+  }
+}
+
+# ═══════════════════════════════════════════
+# ANALYTICS — Social Listening (Phase 3)
+# ═══════════════════════════════════════════
+
+### Quét trend ngành marketing
+POST {{base}}/api/analytics/listening/scan
+Content-Type: application/json
+
+{
+  "industry": "marketing",
+  "hours_back": 24
+}
+
+###
+
+### Monitor keywords cụ thể
+POST {{base}}/api/analytics/listening/keywords
+Content-Type: application/json
+
+{
+  "keywords": ["AI marketing", "phần mềm quản lý", "TikTok shop", "#thuong_mai_dien_tu"]
+}
+
+###
+
+### Crisis check
+POST {{base}}/api/analytics/listening/crisis-check
+Content-Type: application/json
+
+{
+  "texts": [
+    "FuviAI tệ quá, không support gì hết",
+    "scam hoàn toàn, đòi tiền hoàn không được",
+    "Sản phẩm tốt, dùng 3 tháng rồi",
+    "bóc phốt FuviAI lừa đảo khách hàng",
+    "Support nhiệt tình, recommend cho mọi người"
+  ],
+  "alert_zalo_user": ""
+}
+
+###
+
+### Tạo content ăn theo trend
+POST {{base}}/api/analytics/listening/draft-content
+Content-Type: application/json
+
+{
+  "keyword": "AI tự động hoá doanh nghiệp",
+  "sample_texts": [
+    "Doanh nghiệp VN tăng tốc ứng dụng AI năm 2026",
+    "Top 10 phần mềm AI cho SME Việt Nam"
+  ],
+  "platform": "facebook"
+}
+
+###
+
+### Lịch sử trends
+GET {{base}}/api/analytics/listening/trend-history?limit=10
+
+# ═══════════════════════════════════════════
+# AUTOMATION — Campaign (Phase 2)
+# ═══════════════════════════════════════════
+
+### Phân tích campaign CSV
+POST {{base}}/api/automation/campaign/analyze
+Content-Type: application/json
+
+{
+  "platform": "facebook",
+  "csv_content": "ad_name,impressions,clicks,spend,conversions\nAd A - Awareness,50000,900,5000000,45\nAd B - Retarget,20000,600,3000000,62\nAd C - Lookalike,35000,420,4000000,28"
+}
+
+###
+
+### Tối ưu ngân sách
+POST {{base}}/api/automation/campaign/optimize-budget
+Content-Type: application/json
+
+{
+  "current_budget": {"facebook": 15000000, "tiktok": 8000000, "shopee": 5000000},
+  "goal": "tối đa ROAS",
+  "season": "tet"
+}
+
+###
+
+### Thiết kế A/B Test
+POST {{base}}/api/automation/campaign/ab-test
+Content-Type: application/json
+
+{
+  "objective": "Tăng CTR trên Facebook từ 1.2% lên 2%+",
+  "current_approach": "Ảnh sản phẩm + caption dài 400 chữ",
+  "budget": 10000000
+}
+
+###
+
+### Sentiment Analysis tiếng Việt
+POST {{base}}/api/automation/insight/sentiment
+Content-Type: application/json
+
+{
+  "texts": [
+    "Sản phẩm quá đỉnh của chóp, dùng một lần là ghiền luôn",
+    "Giao hàng chậm thiệt ra, tệ quá",
+    "Ổn ổn thôi, bình thường",
+    "Xịn sò lắm, recommend cho mọi người",
+    "Thất vọng hoàn toàn, không như quảng cáo"
+  ]
+}
+
+###
+
+### Lên lịch đăng bài 1 tuần
+POST {{base}}/api/automation/social/weekly-plan
+Content-Type: application/json
+
+{
+  "product": "FuviAI Marketing Agent",
+  "platforms": ["facebook", "zalo"],
+  "campaign_theme": "Ra mắt tính năng AI content mới tháng 3/2026"
+}
+
+###
+
+### Reply comment tự động
+POST {{base}}/api/automation/social/reply-comment
+Content-Type: application/json
+
+{
+  "comment": "Phần mềm này có hỗ trợ TikTok không vậy shop? Mình đang chạy TikTok ads",
+  "brand_tone": "thân thiện",
+  "context": "FuviAI hỗ trợ TikTok content generation và basic analytics"
+}
+
+# ═══════════════════════════════════════════
+# COMMERCE — Livestream (Phase 4)
+# ═══════════════════════════════════════════
+
+### Chuẩn bị script trước stream
+POST {{base}}/api/commerce/livestream/prepare-script
+Content-Type: application/json
+
+{
+  "product": "FuviAI Marketing Agent — Gói Pro",
+  "platform": "tiktok",
+  "duration_minutes": 60,
+  "target_revenue": 50000000
+}
+
+###
+
+### Bắt đầu session livestream
+POST {{base}}/api/commerce/livestream/start
+Content-Type: application/json
+
+{
+  "product": "FuviAI Marketing Agent",
+  "platform": "tiktok",
+  "target_revenue": 30000000,
+  "session_id": "stream-001"
+}
+
+###
+
+### Gợi ý script real-time
+POST {{base}}/api/commerce/livestream/script
+Content-Type: application/json
+
+{
+  "session_id": "stream-001",
+  "current_viewers": 350,
+  "comments": [
+    "giá bao nhiêu vậy bạn?",
+    "có dùng thử không?",
+    "xịn quá",
+    "bao lâu ra kết quả?"
+  ],
+  "revenue_this_segment": 5000000
+}
+
+###
+
+### Tung flash deal
+POST {{base}}/api/commerce/livestream/flash-deal
+Content-Type: application/json
+
+{
+  "session_id": "stream-001",
+  "discount_percent": 30,
+  "slots": 50,
+  "duration_minutes": 10
+}
+
+###
+
+### Batch reply comments
+POST {{base}}/api/commerce/livestream/batch-reply
+Content-Type: application/json
+
+{
+  "comments": [
+    "giá bao nhiêu vậy?",
+    "có ship toàn quốc không?",
+    "xịn ghê, thả tim cho shop",
+    "dùng được cho shop nhỏ không?",
+    "mình đang dùng Haravan, chuyển sang FuviAI có hơn không?"
+  ],
+  "product_info": "FuviAI Marketing Agent — AI tự động hoá marketing, từ 990K/tháng"
+}
+
+# ═══════════════════════════════════════════
+# COMMERCE — Ad Budget (Phase 4)
+# ═══════════════════════════════════════════
+
+### Lịch mùa vụ quảng cáo VN
+GET {{base}}/api/commerce/budget/season-calendar
+
+###
+
+### Dự báo Q4/2027
+POST {{base}}/api/commerce/budget/forecast/quarterly
+Content-Type: application/json
+
+{
+  "budget": 150000000,
+  "industry": "ecommerce",
+  "quarter": 4,
+  "year": 2027
+}
+
+###
+
+### Kế hoạch ngân sách cả năm
+POST {{base}}/api/commerce/budget/plan/annual
+Content-Type: application/json
+
+{
+  "annual_budget": 600000000,
+  "industry": "saas",
+  "primary_goal": "tăng trưởng user acquisition",
+  "channels": ["facebook", "tiktok", "google", "zalo"]
+}
+
+###
+
+### Budget boost cho mùa Tết
+POST {{base}}/api/commerce/budget/season-boost
+Content-Type: application/json
+
+{
+  "base_budget": 50000000,
+  "season_key": "tet",
+  "industry": "fmcg"
+}
+
+###
+
+### Phân bổ budget tháng 11 (11/11)
+POST {{base}}/api/commerce/budget/allocate
+Content-Type: application/json
+
+{
+  "budget": 80000000,
+  "goal": "conversion",
+  "industry": "ecommerce",
+  "current_month": 11
+}
+
+# ═══════════════════════════════════════════
+# COMMERCE — Personalization (Phase 4)
+# ═══════════════════════════════════════════
+
+### Phân khúc khách hàng CLV
+POST {{base}}/api/commerce/personalize/segment
+Content-Type: application/json
+
+{
+  "customers": [
+    {"id": "KH001", "name": "Anh Minh", "total_spent": 15000000, "days_since_last_purchase": 10, "purchase_count": 8},
+    {"id": "KH002", "name": "Chị Lan", "total_spent": 2500000, "days_since_last_purchase": 45, "purchase_count": 3},
+    {"id": "KH003", "name": "Anh Hùng", "total_spent": 500000, "days_since_last_purchase": 120, "purchase_count": 1},
+    {"id": "KH004", "name": "Chị Hoa", "total_spent": 8000000, "days_since_last_purchase": 200, "purchase_count": 5},
+    {"id": "KH005", "name": "Anh Tuấn", "total_spent": 300000, "days_since_last_purchase": 5, "purchase_count": 1}
+  ]
+}
+
+###
+
+### Email cá nhân hoá cho khách VIP
+POST {{base}}/api/commerce/personalize/email
+Content-Type: application/json
+
+{
+  "customer": {"name": "Anh Minh", "total_spent": 15000000, "last_product": "FuviAI Pro", "days_since_last_purchase": 10},
+  "segment": "champion",
+  "product_context": "FuviAI Enterprise — gói doanh nghiệp mới với 5 users",
+  "trigger": "upsell"
+}
+
+###
+
+### Abandoned cart email sequence
+POST {{base}}/api/commerce/personalize/abandoned-cart
+Content-Type: application/json
+
+{
+  "cart_value": 2970000,
+  "products": ["FuviAI Pro 3 tháng"],
+  "customer_name": "Chị Lan",
+  "segment": "potential"
+}
+
+###
+
+### Trigger flow cho inactive 90 ngày
+POST {{base}}/api/commerce/personalize/trigger-flow
+Content-Type: application/json
+
+{
+  "trigger_event": "inactive_90d",
+  "product": "FuviAI Marketing Agent",
+  "segment": "at_risk"
+}
+
+# ═══════════════════════════════════════════
+# COMMERCE — Compliance (Phase 4)
+# ═══════════════════════════════════════════
+
+### Kiểm tra compliance nội dung
+POST {{base}}/api/commerce/compliance/check
+Content-Type: application/json
+
+{
+  "content": "FuviAI là phần mềm AI marketing số 1 Việt Nam. Đảm bảo tăng doanh thu 300% sau 30 ngày. Hàng nghìn khách hàng đã thành công. Đăng ký ngay hôm nay để nhận ưu đãi đặc biệt!",
+  "platform": "facebook",
+  "content_type": "ad",
+  "industry": "saas"
+}
+
+###
+
+### Batch compliance check
+POST {{base}}/api/commerce/compliance/batch-check
+Content-Type: application/json
+
+{
+  "contents": [
+    "Sản phẩm tốt nhất thị trường, cam kết 100% hiệu quả",
+    "FuviAI giúp bạn tiết kiệm 3 giờ/ngày — miễn phí thử 14 ngày",
+    "Chữa khỏi hoàn toàn mọi vấn đề marketing của bạn"
+  ],
+  "platform": "facebook"
+}
+
+###
+
+### Tự động sửa content vi phạm
+POST {{base}}/api/commerce/compliance/fix
+Content-Type: application/json
+
+{
+  "content": "FuviAI số 1 VN, đảm bảo doanh thu tăng 500%, cam kết hoàn tiền 100% vô điều kiện mãi mãi!",
+  "platform": "facebook"
+}
+
+###
+
+### Policy platform
+GET {{base}}/api/commerce/compliance/policies/tiktok
+
+# ═══════════════════════════════════════════
+# COMMERCE — Orchestrator (Phase 4)
+# ═══════════════════════════════════════════
+
+### Full Campaign Plan (multi-agent, ~2-3 phút)
+POST {{base}}/api/commerce/orchestrate/campaign-plan
+Content-Type: application/json
+
+{
+  "task": "Lập kế hoạch campaign Tết Nguyên Đán 2027 cho FuviAI",
+  "product": "FuviAI Marketing Agent",
+  "industry": "saas",
+  "budget": 200000000,
+  "season": "tet"
+}
+
+###
+
+### Stream Campaign Plan (real-time progress)
+POST {{base}}/api/commerce/orchestrate/campaign-plan/stream
+Content-Type: application/json
+
+{
+  "task": "Kế hoạch launch tính năng mới Q2/2027",
+  "product": "FuviAI Enterprise",
+  "industry": "saas",
+  "budget": 150000000
+}

@@ -1,0 +1,33 @@
+# docker-compose.override.yml — Local development overrides
+# Tự động được merge khi chạy: docker-compose up
+# Không dùng file này cho production
+
+services:
+  app:
+    # Mount source code for hot-reload
+    volumes:
+      - ./backend:/app/backend:ro
+      - ./data:/app/data
+    environment:
+      APP_ENV: development
+    command: uvicorn backend.api.main:app --host 0.0.0.0 --port 8000 --reload
+
+  celery_worker:
+    volumes:
+      - ./backend:/app/backend:ro
+      - ./data:/app/data
+
+  celery_beat:
+    volumes:
+      - ./backend:/app/backend:ro
+
+  frontend:
+    # Dev mode với hot-reload
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend/src:/app/src:ro
+      - ./frontend/public:/app/public:ro
+    environment:
+      NODE_ENV: development
