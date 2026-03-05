@@ -4,6 +4,7 @@ Entry point cho backend API
 """
 
 from contextlib import asynccontextmanager
+import time
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +13,8 @@ from loguru import logger
 from backend.config.settings import get_settings
 from backend.api.routes import agents, content, research, analytics, automation, commerce
 from backend.api.middleware import RateLimitMiddleware, RequestLoggingMiddleware
+
+APP_START_TIME = time.time()
 
 
 @asynccontextmanager
@@ -61,17 +64,47 @@ def create_app() -> FastAPI:
     # ─── Health & Meta ────────────────────────────────────────────────────────
     @app.get("/health", tags=["System"])
     async def health():
+        settings = get_settings()
+        checks: dict[str, str] = {}
+
+        # Ping Redis
+        try:
+            import redis as _redis
+            r = _redis.from_url(settings.redis_url, socket_connect_timeout=2)
+            r.ping()
+            checks["redis"] = "ok"
+        except Exception as e:
+            checks["redis"] = f"error: {e}"
+
+        # Ping PostgreSQL
+        try:
+            import psycopg2
+            conn = psycopg2.connect(settings.database_url, connect_timeout=2)
+            conn.close()
+            checks["postgres"] = "ok"
+        except Exception as e:
+            checks["postgres"] = f"error: {e}"
+
+        overall = "ok" if all(v == "ok" for v in checks.values()) else "degraded"
         return {
-            "status": "ok",
+            "status": overall,
             "service": "fuviai-marketing-agent",
             "version": "1.0.0",
             "agents": 12,
+            "uptime_seconds": round(time.time() - APP_START_TIME),
+            "checks": checks,
         }
+
+    @app.get("/health/live", tags=["System"])
+    async def liveness():
+        """Kubernetes/Docker liveness probe — chỉ check process còn sống."""
+        return {"status": "ok"}
 
     @app.get("/", tags=["System"])
     async def root():
         return {
             "name": "FuviAI Marketing Agent",
+            "version": "1.0.0",
             "docs": "/docs",
             "health": "/health",
         }
