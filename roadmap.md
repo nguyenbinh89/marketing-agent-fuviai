@@ -3,6 +3,30 @@
 
 ---
 
+## 🏆 TRẠNG THÁI TỔNG QUAN (cập nhật 05/03/2026)
+
+| Phase | Nội dung | Status |
+|-------|----------|--------|
+| Phase 1 | Core Agent (12 agents, FastAPI, ChromaDB) | ✅ HOÀN THÀNH |
+| Phase 2 | Automation (Campaign, Insight, Social, Zalo/FB tools) | ✅ HOÀN THÀNH |
+| Phase 3 | Intelligence (Listening, Competitor, Celery scheduler) | ✅ HOÀN THÀNH |
+| Phase 4 | Commerce (Livestream, AdBudget, Personalize, Compliance, Orchestrator) | ✅ HOÀN THÀNH |
+| Phase 5 | Launch (Tests, Middleware, CI/CD, Frontend, Deploy) | ✅ HOÀN THÀNH |
+
+### ✅ Đã deploy
+- **Backend API** — Vercel (github.com/nguyenbinh89/marketing-agent-fuviai)
+- **Frontend** — Next.js 14, 10 pages
+
+### 🔄 Còn lại (Post-Launch)
+- [ ] `backend/tools/search_tool.py` — Web search cho research/listening agents
+- [ ] `backend/tools/tiktok_tool.py` — TikTok for Business API
+- [ ] `backend/tools/shopee_tool.py` — Shopee Open Platform API
+- [ ] `backend/tools/google_ads_tool.py` — Google Ads API
+- [ ] Monitoring — Sentry error tracking + uptime alert
+- [ ] Onboard 3 beta users từ 500+ khách hàng FuviAI
+
+---
+
 ## 📋 MỤC LỤC
 
 - [⚡ Bước 0 — Setup môi trường](#-bước-0--setup-môi-trường)
