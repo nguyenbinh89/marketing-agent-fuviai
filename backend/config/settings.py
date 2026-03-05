@@ -42,6 +42,8 @@ class Settings(BaseSettings):
     shopee_partner_id: str = Field(default="")
     shopee_partner_key: str = Field(default="")
     google_ads_developer_token: str = Field(default="")
+    google_cse_api_key: str = Field(default="", description="Google Custom Search API Key")
+    google_cse_id: str = Field(default="", description="Google Custom Search Engine ID")
 
     # ─── App ────────────────────────────────────────────────
     app_env: str = Field(default="development")
