@@ -148,11 +148,59 @@ export const api = {
       body: JSON.stringify({ industry, hours_back: hoursBack }),
     }),
 
-  // ─── SEO ──────────────────────────────────────────────────────────────────
+  // ─── Research & SEO ───────────────────────────────────────────────────────
   keywordResearch: (topic: string, industry?: string) =>
     request<{ topic: string; keywords: string }>(
       "/api/research/keywords",
       { method: "POST", body: JSON.stringify({ topic, industry }) }
+    ),
+
+  searchMarket: (query: string, days: number = 7, maxResults: number = 8) =>
+    request<{ query: string; days: number; summary: string }>(
+      "/api/research/search",
+      { method: "POST", body: JSON.stringify({ query, days, max_results: maxResults }) }
+    ),
+
+  researchIndustry: (industry: string, aspects?: string[]) =>
+    request<{ industry: string; analysis: string }>(
+      "/api/research/industry",
+      { method: "POST", body: JSON.stringify({ industry, aspects }) }
+    ),
+
+  marketReport: (industry: string = "tổng quan") =>
+    request<{ industry: string; report: string }>(
+      "/api/research/market-report",
+      { method: "POST", body: JSON.stringify({ industry }) }
+    ),
+
+  summarizeUrl: (url: string) =>
+    request<{ url: string; summary: string }>(
+      "/api/research/summarize-url",
+      { method: "POST", body: JSON.stringify({ url }) }
+    ),
+
+  generateMetaTags: (pageTitle: string, pageDescription: string, keywords?: string[], pageType?: string) =>
+    request<{ meta_tags: string }>(
+      "/api/research/seo/meta-tags",
+      { method: "POST", body: JSON.stringify({ page_title: pageTitle, page_description: pageDescription, keywords, page_type: pageType || "article" }) }
+    ),
+
+  generateContentOutline: (keyword: string, wordCount?: number, contentType?: string) =>
+    request<{ keyword: string; outline: string }>(
+      "/api/research/seo/content-outline",
+      { method: "POST", body: JSON.stringify({ keyword, word_count: wordCount || 1500, content_type: contentType || "blog" }) }
+    ),
+
+  seoAudit: (content: string, targetKeyword: string) =>
+    request<{ keyword: string; audit: string }>(
+      "/api/research/seo/audit",
+      { method: "POST", body: JSON.stringify({ content, target_keyword: targetKeyword }) }
+    ),
+
+  generateLandingPageSeo: (product: string, targetKeyword: string, usp?: string) =>
+    request<{ product: string; seo_copy: string }>(
+      "/api/research/seo/landing-page",
+      { method: "POST", body: JSON.stringify({ product, target_keyword: targetKeyword, usp: usp || "" }) }
     ),
 
   // ─── Compliance ───────────────────────────────────────────────────────────

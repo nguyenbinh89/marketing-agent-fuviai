@@ -14,12 +14,14 @@ import {
   Users,
   ShieldCheck,
   Zap,
+  Search,
 } from "lucide-react";
 
 const NAV = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Chat với AI", href: "/chat", icon: MessageSquare },
   { label: "Tạo Content", href: "/content", icon: Pen },
+  { label: "Nghiên cứu & SEO", href: "/research", icon: Search },
   { label: "Phân tích Campaign", href: "/campaigns", icon: BarChart2 },
   { label: "Social Scheduling", href: "/social", icon: Megaphone },
   { label: "Livestream Coach", href: "/livestream", icon: Radio },
