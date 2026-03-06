@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, Settings } from "lucide-react";
+
 import { api } from "@/lib/api";
 
 export default function Header() {
@@ -34,9 +35,12 @@ export default function Header() {
             </span>
           )}
         </Link>
-        <button className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">
+        <Link
+          href="/settings"
+          className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+        >
           <Settings size={18} />
-        </button>
+        </Link>
         <div className="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-white text-sm font-semibold">
           F
         </div>

@@ -7,7 +7,7 @@ import {
   LayoutDashboard, MessageSquare, Pen, BarChart2,
   Megaphone, Radio, TrendingUp, Users, ShieldCheck,
   Zap, Search, ShoppingBag, MousePointerClick,
-  Target, Video, Layers, MessageCircle, Bell, FileText,
+  Target, Video, Layers, MessageCircle, Bell, FileText, Settings,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -58,6 +58,7 @@ const NAV_GROUPS = [
     items: [
       { label: "Campaign Plan AI",  href: "/orchestrate", icon: Zap },
       { label: "Compliance",        href: "/compliance",  icon: ShieldCheck },
+      { label: "Settings",          href: "/settings",    icon: Settings },
     ],
   },
 ];

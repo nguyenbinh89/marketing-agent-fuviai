@@ -535,6 +535,22 @@ export const api = {
       "/api/reports/templates"
     ),
 
+  // ─── Settings ─────────────────────────────────────────────────────────────
+  integrations: () =>
+    request<{
+      summary: { total: number; configured: number; not_configured: number; required_missing: number };
+      groups: Array<{
+        group: string;
+        integrations: Array<{
+          id: string; name: string; description: string;
+          configured: boolean; masked_value: string;
+          env_vars: string[]; action_url: string | null;
+          docs_url: string | null; required: boolean;
+        }>;
+      }>;
+      model: string; env: string; version: string;
+    }>("/api/settings/integrations"),
+
   generateReport: (payload: {
     report_type: string;
     days: number;
