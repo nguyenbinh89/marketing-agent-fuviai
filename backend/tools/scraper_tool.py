@@ -109,8 +109,8 @@ class ScraperTool:
     def scrape_cafef_headlines(self, max_articles: int = 10) -> list[dict[str, str]]:
         """Crawl headlines từ CafeF (marketing/quảng cáo)."""
         urls = [
-            "https://cafef.vn/thuong-truong.chn",
-            "https://cafef.vn/kinh-te-vi-mo.chn",
+            "https://cafef.vn/doanh-nghiep.chn",
+            "https://cafef.vn/kinh-doanh.chn",
         ]
         articles = []
         for url in urls:
