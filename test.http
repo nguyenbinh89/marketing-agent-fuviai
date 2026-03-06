@@ -1,8 +1,118 @@
 ### FuviAI Marketing Agent — REST Client Tests
 ### Dùng VS Code REST Client extension để chạy
 
-@base = 
+@base =
 
+
+
+# ═══════════════════════════════════════════
+# CUSTOMERS — CRUD + Cart + Email Logs
+# ═══════════════════════════════════════════
+
+### Tạo / cập nhật customer (upsert)
+POST {{base}}/api/customers/
+Content-Type: application/json
+
+{
+  "customer_id": "C001",
+  "name": "Nguyễn Văn An",
+  "email": "an@example.com",
+  "phone": "0901234567",
+  "total_spent": 12000000,
+  "purchase_count": 8,
+  "days_since_last_purchase": 5,
+  "clv_tier": "champion",
+  "birthday": "03-06",
+  "email_opted_in": true,
+  "industry": "saas"
+}
+
+###
+
+### Tạo batch customers (CSV import)
+POST {{base}}/api/customers/batch
+Content-Type: application/json
+
+[
+  { "customer_id": "C002", "name": "Trần Thị Bích", "email": "bich@example.com", "total_spent": 4500000, "purchase_count": 3, "days_since_last_purchase": 20, "clv_tier": "loyal", "birthday": "07-15" },
+  { "customer_id": "C003", "name": "Lê Minh Cường", "email": "cuong@example.com", "total_spent": 800000, "purchase_count": 1, "days_since_last_purchase": 60, "clv_tier": "potential" },
+  { "customer_id": "C004", "name": "Phạm Thị Dung", "email": "dung@example.com", "total_spent": 200000, "purchase_count": 1, "days_since_last_purchase": 120, "clv_tier": "at_risk" }
+]
+
+###
+
+### Lấy thông tin 1 customer
+GET {{base}}/api/customers/C001
+
+###
+
+### Cập nhật customer
+PATCH {{base}}/api/customers/C001
+Content-Type: application/json
+
+{
+  "total_spent": 15000000,
+  "purchase_count": 10,
+  "days_since_last_purchase": 2,
+  "clv_tier": "champion"
+}
+
+###
+
+### Danh sách customers (filter theo tier)
+GET {{base}}/api/customers/?clv_tier=champion&limit=20
+
+###
+
+### Danh sách customers opted-in
+GET {{base}}/api/customers/?email_opted_in=true&limit=50
+
+###
+
+### Xoá customer
+DELETE {{base}}/api/customers/C004
+
+###
+
+### Tạo abandoned cart
+POST {{base}}/api/customers/carts/
+Content-Type: application/json
+
+{
+  "cart_id": "CART-001",
+  "email": "bich@example.com",
+  "name": "Trần Thị Bích",
+  "segment": "loyal",
+  "cart_value": 2500000,
+  "products": ["FuviAI Pro Annual", "FuviAI Training Package"]
+}
+
+###
+
+### Đánh dấu cart đã được mua (dừng email sequence)
+POST {{base}}/api/customers/carts/CART-001/recover
+
+###
+
+### Danh sách carts chưa recovered
+GET {{base}}/api/customers/carts/?is_recovered=false
+
+###
+
+### Email logs 7 ngày (tất cả types)
+GET {{base}}/api/customers/email-logs/?days_back=7
+
+###
+
+### Email logs theo type
+GET {{base}}/api/customers/email-logs/?email_type=birthday&days_back=30
+
+###
+
+### Email summary theo type
+GET {{base}}/api/customers/email-logs/summary?days_back=7
+
+###
 
 # ═══════════════════════════════════════════
 # HEALTH CHECK
