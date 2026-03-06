@@ -414,3 +414,194 @@ class TestScraperTool:
         new = {**snapshot, "timestamp": "2027-01-01"}
         result = scraper.detect_changes(snapshot, new)
         assert not result["has_changes"]
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# SEARCH TOOL
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestSearchTool:
+    def test_search_response_success_true(self):
+        from backend.tools.search_tool import SearchResponse, SearchResult
+        resp = SearchResponse(query="test")
+        resp.results = [SearchResult(title="T", url="https://example.com", snippet="S")]
+        resp.total = 1
+        assert resp.success is True
+
+    def test_search_response_success_false_no_results(self):
+        from backend.tools.search_tool import SearchResponse
+        resp = SearchResponse(query="test")
+        assert resp.success is False
+
+    def test_search_response_success_false_has_error(self):
+        from backend.tools.search_tool import SearchResponse, SearchResult
+        resp = SearchResponse(query="test", error="timeout")
+        resp.results = [SearchResult(title="T", url="https://x.com", snippet="S")]
+        assert resp.success is False
+
+    def test_format_results_for_llm_no_results(self):
+        from backend.tools.search_tool import SearchResponse, SearchTool
+        tool = SearchTool()
+        resp = SearchResponse(query="test", error="lỗi kết nối")
+        text = tool.format_results_for_llm(resp)
+        assert "Không tìm thấy" in text
+
+    def test_format_results_for_llm_with_results(self):
+        from backend.tools.search_tool import SearchResponse, SearchResult, SearchTool
+        tool = SearchTool()
+        resp = SearchResponse(query="AI marketing")
+        resp.results = [
+            SearchResult(title="FuviAI ra mắt", url="https://fuviai.com", snippet="Tin tức mới nhất về AI", source="fuviai.com"),
+        ]
+        resp.total = 1
+        text = tool.format_results_for_llm(resp)
+        assert "FuviAI ra mắt" in text
+        assert "AI marketing" in text
+
+    def test_format_results_respects_max_chars(self):
+        from backend.tools.search_tool import SearchResponse, SearchResult, SearchTool
+        tool = SearchTool()
+        resp = SearchResponse(query="test")
+        resp.results = [
+            SearchResult(title=f"Title {i}", url=f"https://ex.com/{i}", snippet="A" * 500)
+            for i in range(20)
+        ]
+        resp.total = 20
+        text = tool.format_results_for_llm(resp, max_chars=500)
+        assert len(text) <= 600  # chút tolerance cho header
+
+    @patch("backend.tools.search_tool.httpx.post")
+    def test_duckduckgo_timeout(self, mock_post):
+        import httpx
+        from backend.tools.search_tool import DuckDuckGoSearch
+        mock_post.side_effect = httpx.TimeoutException("timeout")
+        ddg = DuckDuckGoSearch()
+        result = ddg.search("test query")
+        assert result.success is False
+        assert "Timeout" in result.error
+
+    @patch("backend.tools.search_tool.httpx.post")
+    def test_duckduckgo_returns_results(self, mock_post):
+        from backend.tools.search_tool import DuckDuckGoSearch
+        mock_resp = MagicMock()
+        mock_resp.text = """
+        <html><body>
+          <div class="result">
+            <a class="result__a" href="https://example.com">Tiêu đề bài viết</a>
+            <a class="result__snippet">Mô tả ngắn về bài viết</a>
+            <a class="result__url">example.com</a>
+          </div>
+        </body></html>
+        """
+        mock_post.return_value = mock_resp
+        ddg = DuckDuckGoSearch()
+        result = ddg.search("AI marketing Việt Nam")
+        assert result.engine == "duckduckgo"
+        assert isinstance(result.results, list)
+
+    def test_google_not_configured(self):
+        from backend.tools.search_tool import GoogleCustomSearch
+        with patch("backend.tools.search_tool.get_settings") as mock_settings:
+            mock_settings.return_value.google_cse_api_key = ""
+            mock_settings.return_value.google_cse_id = ""
+            g = GoogleCustomSearch()
+            assert g.is_configured is False
+            resp = g.search("test")
+            assert resp.success is False
+            assert "chưa được cấu hình" in resp.error
+
+    def test_search_tool_fallback_to_ddg(self):
+        """Nếu Google không cấu hình, SearchTool phải dùng DuckDuckGo."""
+        from backend.tools.search_tool import SearchTool, SearchResponse, SearchResult
+        tool = SearchTool()
+        # Google không configured
+        tool._google._api_key = ""
+        tool._google._cse_id = ""
+
+        mock_resp = SearchResponse(query="test")
+        mock_resp.results = [SearchResult(title="DDG Result", url="https://ddg.com", snippet="snippet")]
+        mock_resp.total = 1
+
+        with patch.object(tool._ddg, "search", return_value=mock_resp):
+            result = tool.search("test query", prefer_google=True)
+        assert result.engine == "duckduckgo"
+        assert len(result.results) == 1
+
+    def test_batch_search_returns_dict(self):
+        from backend.tools.search_tool import SearchTool, SearchResponse
+        tool = SearchTool()
+        empty = SearchResponse(query="q")
+        with patch.object(tool, "search", return_value=empty):
+            results = tool.batch_search(["kw1", "kw2"], delay=0)
+        assert isinstance(results, dict)
+        assert "kw1" in results
+        assert "kw2" in results
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# RESEARCH AGENT — search_market
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestResearchAgentSearchMarket:
+    @pytest.fixture
+    def agent(self, mock_anthropic):
+        with patch("backend.agents.research_agent.VectorStore"), \
+             patch("backend.agents.research_agent.SearchTool") as mock_search_cls:
+            from backend.agents.research_agent import ResearchAgent
+            a = ResearchAgent()
+            a._search = mock_search_cls()
+            yield a
+
+    def test_search_market_no_results(self, agent):
+        from backend.tools.search_tool import SearchResponse
+        agent._search.search_news.return_value = SearchResponse(query="test", error="lỗi")
+        result = agent.search_market("AI marketing")
+        assert "Không tìm thấy" in result
+
+    def test_search_market_with_results(self, agent):
+        from backend.tools.search_tool import SearchResponse, SearchResult
+        resp = SearchResponse(query="AI marketing")
+        resp.results = [
+            SearchResult(title="AI marketing VN 2026", url="https://ex.com", snippet="Xu hướng mới")
+        ]
+        resp.total = 1
+        agent._search.search_news.return_value = resp
+        agent._search.format_results_for_llm.return_value = "Kết quả tìm kiếm cho: 'AI marketing'"
+        with patch.object(agent.vector_store, "add_documents", return_value=1):
+            result = agent.search_market("AI marketing", days=7)
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# COMPETITOR AGENT — search_competitor_news
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestCompetitorAgentNews:
+    @pytest.fixture
+    def agent(self, mock_anthropic):
+        with patch("backend.agents.competitor_agent.ScraperTool"), \
+             patch("backend.agents.competitor_agent.SearchTool") as mock_search_cls:
+            from backend.agents.competitor_agent import CompetitorAgent
+            a = CompetitorAgent()
+            a._search = mock_search_cls()
+            yield a
+
+    def test_search_competitor_news_returns_list(self, agent):
+        from backend.tools.search_tool import SearchResponse, SearchResult
+        resp = SearchResponse(query="Haravan")
+        resp.results = [
+            SearchResult(title="Haravan ra mắt tính năng mới", url="https://haravan.com/news", snippet="Chi tiết...", source="haravan.com"),
+        ]
+        resp.total = 1
+        agent._search.search_news.return_value = resp
+        news = agent.search_competitor_news("Haravan", days=30)
+        assert isinstance(news, list)
+        assert len(news) == 1
+        assert news[0]["title"] == "Haravan ra mắt tính năng mới"
+
+    def test_search_competitor_news_empty(self, agent):
+        from backend.tools.search_tool import SearchResponse
+        agent._search.search_news.return_value = SearchResponse(query="Unknown")
+        news = agent.search_competitor_news("Unknown Corp")
+        assert news == []

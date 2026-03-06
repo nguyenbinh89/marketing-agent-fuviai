@@ -225,6 +225,58 @@ class TestAnalyticsRoutes:
         r = client.post("/api/analytics/listening/crisis-check", json={"texts": []})
         assert r.status_code == 400
 
+    def test_competitor_news_invalid_days(self, client):
+        r = client.get("/api/analytics/competitors/Haravan/news?days=0")
+        assert r.status_code == 400
+
+    @patch("backend.api.routes.analytics.get_competitor_agent")
+    def test_competitor_news_success(self, mock_get, client):
+        mock_agent = MagicMock()
+        mock_agent.search_competitor_news.return_value = [
+            {"title": "Haravan tin tức", "url": "https://x.com", "snippet": "...", "source": "x.com", "published_at": ""},
+        ]
+        mock_get.return_value = mock_agent
+        r = client.get("/api/analytics/competitors/Haravan/news?days=30")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["competitor"] == "Haravan"
+        assert data["total"] == 1
+        assert len(data["news"]) == 1
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# RESEARCH SEARCH ENDPOINT
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestResearchSearchRoute:
+    def test_search_empty_query(self, client):
+        r = client.post("/api/research/search", json={"query": ""})
+        assert r.status_code == 400
+
+    def test_search_days_out_of_range(self, client):
+        r = client.post("/api/research/search", json={"query": "AI marketing", "days": 0})
+        assert r.status_code == 400
+
+    def test_search_max_results_out_of_range(self, client):
+        r = client.post("/api/research/search", json={"query": "AI marketing", "max_results": 25})
+        assert r.status_code == 400
+
+    @patch("backend.api.routes.research.get_research_agent")
+    def test_search_success(self, mock_get, client):
+        mock_agent = MagicMock()
+        mock_agent.search_market.return_value = "Tóm tắt thị trường AI marketing Việt Nam 2026..."
+        mock_get.return_value = mock_agent
+        r = client.post("/api/research/search", json={
+            "query": "AI marketing Việt Nam 2026",
+            "days": 7,
+            "max_results": 8,
+        })
+        assert r.status_code == 200
+        data = r.json()
+        assert data["query"] == "AI marketing Việt Nam 2026"
+        assert data["days"] == 7
+        assert "summary" in data
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # COMMERCE ROUTES (Phase 4)
