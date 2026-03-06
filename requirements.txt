@@ -1,7 +1,5 @@
-# ═══════════════════════════════════════════
-# FuviAI Marketing Agent — Requirements
-# Python 3.12+
-# ═══════════════════════════════════════════
+# FuviAI Marketing Agent - Requirements
+# Python 3.11+
 
 # Core AI / LLM
 anthropic>=0.40.0
@@ -26,9 +24,9 @@ celery>=5.4.0
 
 # Vector DB
 chromadb>=0.5.20,<0.6.0
-onnxruntime==1.18.0
+onnxruntime>=1.18.0
 
-# NLP tiếng Việt
+# NLP
 underthesea>=6.8.4
 
 # Web Scraping / Crawling
@@ -56,6 +54,5 @@ pytest>=8.3.0
 pytest-asyncio>=0.24.0
 pytest-cov>=6.0.0
 pytest-xdist>=3.6.0
-httpx>=0.28.0
 ruff>=0.8.0
 coverage>=7.6.0

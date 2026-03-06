@@ -11,7 +11,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from backend.config.settings import get_settings
-from backend.api.routes import agents, content, research, analytics, automation, commerce, customers, shopee, google_ads, facebook_ads, tiktok_ads, ads_unified, zalo_oa, notifications, reports, settings
+from backend.api.routes import agents, content, research, analytics, automation, commerce, customers, shopee, google_ads, facebook_ads, tiktok_ads, ads_unified, zalo_oa, notifications, reports
+from backend.api.routes import settings as settings_routes
 from backend.api.middleware import RateLimitMiddleware, RequestLoggingMiddleware
 from backend.monitoring import init_sentry, sentry_capture_exception
 
@@ -76,7 +77,7 @@ def create_app() -> FastAPI:
     app.include_router(zalo_oa.router,        prefix="/api/zalo",          tags=["Zalo OA"])
     app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
     app.include_router(reports.router,       prefix="/api/reports",       tags=["Reports"])
-    app.include_router(settings.router,      prefix="/api/settings",      tags=["Settings"])
+    app.include_router(settings_routes.router, prefix="/api/settings",    tags=["Settings"])
 
     # ─── Health & Meta ────────────────────────────────────────────────────────
     @app.get("/health", tags=["System"])
