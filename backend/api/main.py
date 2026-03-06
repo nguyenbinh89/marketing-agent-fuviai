@@ -13,6 +13,7 @@ from loguru import logger
 from backend.config.settings import get_settings
 from backend.api.routes import agents, content, research, analytics, automation, commerce
 from backend.api.middleware import RateLimitMiddleware, RequestLoggingMiddleware
+from backend.monitoring import init_sentry, sentry_capture_exception
 
 APP_START_TIME = time.time()
 
@@ -20,6 +21,7 @@ APP_START_TIME = time.time()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
+    init_sentry(settings)
     logger.info(f"FuviAI Marketing Agent starting | env={settings.app_env} | version=1.0.0")
     yield
     logger.info("FuviAI Marketing Agent shutting down")

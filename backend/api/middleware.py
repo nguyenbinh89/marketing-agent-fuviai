@@ -15,6 +15,12 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from loguru import logger
 
+try:
+    from backend.monitoring import sentry_capture_exception
+except ImportError:
+    def sentry_capture_exception(e: Exception) -> None:
+        pass
+
 
 # ─── Rate Limiter ─────────────────────────────────────────────────────────────
 
@@ -139,6 +145,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 f"{request.method} {request.url.path} "
                 f"| EXCEPTION | {elapsed_ms}ms | ip={client_ip} | error={e}"
             )
+            sentry_capture_exception(e)
             raise
 
 

@@ -52,6 +52,10 @@ class Settings(BaseSettings):
     google_cse_api_key: str = Field(default="", description="Google Custom Search API Key")
     google_cse_id: str = Field(default="", description="Google Custom Search Engine ID")
 
+    # ─── Monitoring ─────────────────────────────────────────
+    sentry_dsn: str = Field(default="", description="Sentry DSN — để trống để tắt")
+    sentry_traces_sample_rate: float = Field(default=0.1, description="0.0-1.0 — tỷ lệ trace performance")
+
     # ─── App ────────────────────────────────────────────────
     app_env: str = Field(default="development")
     app_port: int = Field(default=8000)
