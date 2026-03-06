@@ -38,6 +38,7 @@ logs/
 # Data (runtime generated)
 data/chroma/
 data/samples/
+data/celerybeat-schedule
 
 # Node (Phase 5 frontend)
 node_modules/
