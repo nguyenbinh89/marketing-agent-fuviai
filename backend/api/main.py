@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from backend.config.settings import get_settings
-from backend.api.routes import agents, content, research, analytics, automation, commerce
+from backend.api.routes import agents, content, research, analytics, automation, commerce, customers
 from backend.api.middleware import RateLimitMiddleware, RequestLoggingMiddleware
 from backend.monitoring import init_sentry, sentry_capture_exception
 
@@ -23,6 +23,11 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     init_sentry(settings)
     logger.info(f"FuviAI Marketing Agent starting | env={settings.app_env} | version=1.0.0")
+    try:
+        from backend.db.database import create_tables
+        create_tables()
+    except Exception as e:
+        logger.warning(f"DB table creation skipped (no DB?): {e}")
     yield
     logger.info("FuviAI Marketing Agent shutting down")
 
@@ -62,6 +67,7 @@ def create_app() -> FastAPI:
     app.include_router(analytics.router,  prefix="/api/analytics",  tags=["Analytics"])
     app.include_router(automation.router, prefix="/api/automation", tags=["Automation"])
     app.include_router(commerce.router,   prefix="/api/commerce",   tags=["Commerce & AI Orchestrator"])
+    app.include_router(customers.router,  prefix="/api/customers",  tags=["Customers & Email Logs"])
 
     # ─── Health & Meta ────────────────────────────────────────────────────────
     @app.get("/health", tags=["System"])

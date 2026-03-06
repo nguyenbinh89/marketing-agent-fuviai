@@ -56,23 +56,21 @@ app.conf.beat_schedule = {
         "task": "backend.tasks.listening_tasks.process_scheduled_posts",
         "schedule": crontab(minute="*/5"),
     },
-    # Birthday emails: 9am mỗi ngày (customers list lấy từ DB — demo dùng rỗng)
+    # Birthday emails: 9am mỗi ngày — tự query DB
     "birthday-emails-daily": {
         "task": "backend.tasks.email_tasks.send_birthday_emails",
         "schedule": crontab(hour=9, minute=0),
-        "kwargs": {"customers": []},  # production: inject từ DB query
     },
-    # Win-back campaign: mỗi thứ Hai 10am
+    # Win-back campaign: mỗi thứ Hai 10am — tự query DB
     "winback-emails-weekly": {
         "task": "backend.tasks.email_tasks.send_winback_emails",
         "schedule": crontab(hour=10, minute=0, day_of_week=1),
-        "kwargs": {"customers": [], "inactive_threshold_days": 90},
+        "kwargs": {"inactive_threshold_days": 90},
     },
-    # Abandoned cart reminders: mỗi 1 giờ từ 8am-11pm
+    # Abandoned cart reminders: mỗi 1 giờ từ 8am-11pm — tự query DB
     "abandoned-cart-hourly": {
         "task": "backend.tasks.email_tasks.send_abandoned_cart_reminders",
         "schedule": crontab(minute=0, hour="8-23"),
-        "kwargs": {"carts": []},  # production: inject từ DB/Redis queue
     },
     # Weekly email stats report: thứ Hai 8am
     "email-stats-weekly": {
