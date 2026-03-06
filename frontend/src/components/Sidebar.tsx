@@ -17,6 +17,7 @@ import {
   Search,
   ShoppingBag,
   MousePointerClick,
+  Target,
 } from "lucide-react";
 
 const NAV = [
@@ -30,6 +31,7 @@ const NAV = [
   { label: "Analytics", href: "/analytics", icon: TrendingUp },
   { label: "Shopee E-commerce", href: "/shopee", icon: ShoppingBag },
   { label: "Google Ads", href: "/google-ads", icon: MousePointerClick },
+  { label: "Facebook Ads", href: "/facebook-ads", icon: Target },
   { label: "Khách hàng", href: "/customers", icon: Users },
   { label: "Compliance", href: "/compliance", icon: ShieldCheck },
   { label: "Campaign Plan AI", href: "/orchestrate", icon: Zap },

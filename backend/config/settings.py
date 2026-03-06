@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     zalo_oa_secret: str = Field(default="")
     facebook_access_token: str = Field(default="")
     facebook_page_id: str = Field(default="")
+    facebook_ad_account_id: str = Field(default="", description="Facebook Ad Account ID (dạng act_XXXXXXXXX)")
     tiktok_access_token: str = Field(default="")
     tiktok_app_id: str = Field(default="")
     instagram_access_token: str = Field(default="")

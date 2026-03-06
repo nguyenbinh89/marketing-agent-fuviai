@@ -342,6 +342,60 @@ export const api = {
       { method: "PATCH", body: JSON.stringify({ campaign_id: campaignId, status }) }
     ),
 
+  // ─── Facebook Ads ─────────────────────────────────────────────────────────
+  facebookAdsCampaigns: (status: string = "ACTIVE") =>
+    request<{ status: string; count: number; campaigns: Array<Record<string, unknown>> }>(
+      `/api/ads/facebook/campaigns?status=${status}`
+    ),
+
+  facebookAdsUpdateStatus: (campaignId: string, status: "ACTIVE" | "PAUSED") =>
+    request<{ campaign_id: string; new_status: string }>(
+      "/api/ads/facebook/campaigns/status",
+      { method: "PATCH", body: JSON.stringify({ campaign_id: campaignId, status }) }
+    ),
+
+  facebookAdsUpdateBudget: (campaignId: string, dailyBudgetVnd?: number, lifetimeBudgetVnd?: number) =>
+    request<{ updated: boolean }>(
+      "/api/ads/facebook/campaigns/budget",
+      { method: "PATCH", body: JSON.stringify({ campaign_id: campaignId, daily_budget_vnd: dailyBudgetVnd, lifetime_budget_vnd: lifetimeBudgetVnd }) }
+    ),
+
+  facebookAdsAdsets: (campaignId?: string) =>
+    request<{ count: number; adsets: Array<Record<string, unknown>> }>(
+      `/api/ads/facebook/adsets${campaignId ? `?campaign_id=${campaignId}` : ""}`
+    ),
+
+  facebookAdsAccountInsights: (days: number = 30) =>
+    request<Record<string, unknown>>(`/api/ads/facebook/insights/account?days=${days}`),
+
+  facebookAdsCampaignInsights: (days: number = 7) =>
+    request<{ days: number; count: number; rows: Array<Record<string, unknown>> }>(
+      `/api/ads/facebook/insights/campaigns?days=${days}`
+    ),
+
+  facebookAdsAdsetInsights: (days: number = 7) =>
+    request<{ days: number; count: number; rows: Array<Record<string, unknown>> }>(
+      `/api/ads/facebook/insights/adsets?days=${days}`
+    ),
+
+  facebookAdsAdInsights: (days: number = 7) =>
+    request<{ days: number; count: number; rows: Array<Record<string, unknown>> }>(
+      `/api/ads/facebook/insights/ads?days=${days}`
+    ),
+
+  facebookAdsDelivery: (days: number = 30, breakdown: string = "age,gender") =>
+    request<{ days: number; breakdown: string; count: number; rows: Array<Record<string, unknown>> }>(
+      `/api/ads/facebook/insights/delivery?days=${days}&breakdown=${encodeURIComponent(breakdown)}`
+    ),
+
+  facebookAdsLibrary: (q: string, country: string = "VN", limit: number = 20) =>
+    request<{ query: string; count: number; ads: Array<Record<string, unknown>> }>(
+      `/api/ads/facebook/ad-library?q=${encodeURIComponent(q)}&country=${country}&limit=${limit}`
+    ),
+
+  facebookAdsBenchmark: (industry: string = "saas") =>
+    request<Record<string, unknown>>(`/api/ads/facebook/benchmark?industry=${industry}`),
+
   // ─── Budget ───────────────────────────────────────────────────────────────
   getSeasonCalendar: () =>
     request<{ calendar: Record<string, unknown> }>("/api/commerce/budget/season-calendar"),
