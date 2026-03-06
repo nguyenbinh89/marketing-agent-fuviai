@@ -187,6 +187,31 @@ export const api = {
       { method: "POST", body: JSON.stringify(payload) }
     ),
 
+  // ─── Email sending ────────────────────────────────────────────────────────
+  sendPersonalizedEmail: (customer: Record<string, unknown>, segment: string, trigger?: string) =>
+    request<{ success: boolean; to: string; error?: string }>(
+      "/api/commerce/personalize/send-email",
+      { method: "POST", body: JSON.stringify({ customer, segment, trigger: trigger || "" }) }
+    ),
+
+  sendBirthdayEmail: (customerEmail: string, customerName: string, tier?: string) =>
+    request<{ success: boolean; to: string; error?: string }>(
+      "/api/commerce/personalize/send-birthday",
+      { method: "POST", body: JSON.stringify({ customer_email: customerEmail, customer_name: customerName, tier: tier || "loyal" }) }
+    ),
+
+  sendAbandonedCart: (customerEmail: string, customerName: string, cartValue: number, products: string[], steps?: number[]) =>
+    request<{ to: string; steps_sent: Record<string, { success: boolean; error?: string }> }>(
+      "/api/commerce/personalize/send-abandoned-cart",
+      { method: "POST", body: JSON.stringify({ customer_email: customerEmail, customer_name: customerName, cart_value: cartValue, products, steps: steps || [1] }) }
+    ),
+
+  sendBulkEmail: (customers: Record<string, unknown>[], baseMessage: string, subject: string) =>
+    request<{ sent: number; failed: number; total: number; errors: string[] }>(
+      "/api/commerce/personalize/send-bulk",
+      { method: "POST", body: JSON.stringify({ customers, base_message: baseMessage, subject }) }
+    ),
+
   // ─── Budget ───────────────────────────────────────────────────────────────
   getSeasonCalendar: () =>
     request<{ calendar: Record<string, unknown> }>("/api/commerce/budget/season-calendar"),

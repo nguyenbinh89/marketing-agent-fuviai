@@ -650,6 +650,73 @@ Content-Type: application/json
 GET {{base}}/api/commerce/compliance/policies/tiktok
 
 # ═══════════════════════════════════════════
+# COMMERCE — Email Sending (SendGrid)
+# ═══════════════════════════════════════════
+
+### Gửi email cá nhân hoá ngay (AI generate + SendGrid)
+POST {{base}}/api/commerce/personalize/send-email
+Content-Type: application/json
+
+{
+  "customer": {
+    "name": "Nguyễn Văn An",
+    "email": "an@example.com",
+    "total_spent": 12000000,
+    "days_since_last_purchase": 5,
+    "purchase_count": 8
+  },
+  "segment": "champion",
+  "trigger": "repeat_purchase"
+}
+
+###
+
+### Gửi abandoned cart step 1 (sau 1h)
+POST {{base}}/api/commerce/personalize/send-abandoned-cart
+Content-Type: application/json
+
+{
+  "customer_email": "khach@example.com",
+  "customer_name": "Trần Thị Bích",
+  "cart_value": 1500000,
+  "products": ["FuviAI Pro", "FuviAI Training"],
+  "segment": "potential",
+  "steps": [1]
+}
+
+###
+
+### Gửi birthday email
+POST {{base}}/api/commerce/personalize/send-birthday
+Content-Type: application/json
+
+{
+  "customer_email": "vip@example.com",
+  "customer_name": "Phạm Thị Dung",
+  "tier": "champion",
+  "birthday_offer": "Voucher 500K cho dịch vụ FuviAI Enterprise"
+}
+
+###
+
+### Gửi bulk email với AI variants (phân theo CLV tier)
+POST {{base}}/api/commerce/personalize/send-bulk
+Content-Type: application/json
+
+{
+  "customers": [
+    { "email": "a@example.com", "name": "Nguyễn An", "clv_tier": "champion", "total_spent": 12000000 },
+    { "email": "b@example.com", "name": "Trần Bích", "clv_tier": "loyal", "total_spent": 4500000 },
+    { "email": "c@example.com", "name": "Lê Cường", "clv_tier": "potential", "total_spent": 800000 },
+    { "email": "d@example.com", "name": "Phạm Dung", "clv_tier": "at_risk", "total_spent": 200000 }
+  ],
+  "base_message": "FuviAI vừa ra mắt tính năng mới: AI tự động tạo content cho TikTok, Shopee, Google Ads. Giúp tiết kiệm 3 giờ/ngày và tăng doanh thu.",
+  "subject": "FuviAI — Tính năng mới tháng 3/2026"
+}
+
+###
+
+# ═══════════════════════════════════════════
 # COMMERCE — Orchestrator (Phase 4)
 # ═══════════════════════════════════════════
 

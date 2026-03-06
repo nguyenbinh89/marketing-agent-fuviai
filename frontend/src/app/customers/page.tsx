@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Upload, Mail, MessageSquare, RefreshCw, ChevronDown } from "lucide-react";
+import { Users, Upload, Mail, MessageSquare, RefreshCw, Send, CheckCircle, XCircle } from "lucide-react";
 import { cn, formatVND } from "@/lib/utils";
+import { api } from "@/lib/api";
 
 const SAMPLE_CUSTOMERS = [
   { customer_id: "C001", name: "Nguyễn Văn An", email: "an@example.com", total_spent: 12000000, days_since_last_purchase: 5, purchase_count: 8 },
@@ -51,6 +52,14 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<SegmentResult | null>(null);
   const [personalMsg, setPersonalMsg] = useState("");
   const [loadingPersonal, setLoadingPersonal] = useState(false);
+
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [sendResult, setSendResult] = useState<{ success: boolean; msg: string } | null>(null);
+
+  const [bulkSubject, setBulkSubject] = useState("");
+  const [bulkMsg, setBulkMsg] = useState("");
+  const [sendingBulk, setSendingBulk] = useState(false);
+  const [bulkResult, setBulkResult] = useState<{ sent: number; failed: number } | null>(null);
 
   const loadSample = () => setCustomers(SAMPLE_CUSTOMERS);
 
@@ -123,6 +132,44 @@ export default function CustomersPage() {
       setPersonalMsg("❌ Lỗi tạo tin nhắn cá nhân hoá");
     } finally {
       setLoadingPersonal(false);
+    }
+  };
+
+  const sendEmail = async () => {
+    if (!selectedCustomer || channel !== "email") return;
+    const full = customers.find((c) => c.customer_id === selectedCustomer.customer_id);
+    if (!full) return;
+    setSendingEmail(true);
+    setSendResult(null);
+    try {
+      const res = await api.sendPersonalizedEmail(
+        full as Record<string, unknown>,
+        selectedCustomer.tier,
+        "nurture",
+      );
+      setSendResult({ success: res.success, msg: res.success ? `Đã gửi tới ${res.to}` : (res.error || "Lỗi không xác định") });
+    } catch (e: unknown) {
+      setSendResult({ success: false, msg: e instanceof Error ? e.message : "Lỗi gửi email" });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const sendBulkEmail = async () => {
+    if (!bulkMsg.trim() || !bulkSubject.trim() || !segments.length) return;
+    setSendingBulk(true);
+    setBulkResult(null);
+    const enriched = segments.map((s) => {
+      const full = customers.find((c) => c.customer_id === s.customer_id);
+      return { ...(full as Record<string, unknown>), clv_tier: s.tier };
+    });
+    try {
+      const res = await api.sendBulkEmail(enriched, bulkMsg, bulkSubject);
+      setBulkResult({ sent: res.sent, failed: res.failed });
+    } catch (e: unknown) {
+      setBulkResult({ sent: 0, failed: segments.length });
+    } finally {
+      setSendingBulk(false);
     }
   };
 
@@ -273,17 +320,80 @@ export default function CustomersPage() {
           {loadingPersonal ? (
             <p className="text-sm text-slate-400">AI đang tạo tin nhắn...</p>
           ) : personalMsg ? (
-            <div className="bg-slate-50 rounded-lg p-4">
-              <div
-                className="prose-ai text-sm"
-                dangerouslySetInnerHTML={{
-                  __html: personalMsg
-                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-                    .replace(/\n/g, "<br/>"),
-                }}
-              />
+            <div className="space-y-3">
+              <div className="bg-slate-50 rounded-lg p-4">
+                <div
+                  className="prose-ai text-sm"
+                  dangerouslySetInnerHTML={{
+                    __html: personalMsg
+                      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                      .replace(/\n/g, "<br/>"),
+                  }}
+                />
+              </div>
+              {channel === "email" && (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={sendEmail}
+                    disabled={sendingEmail}
+                    className="btn-primary text-sm flex items-center gap-2"
+                  >
+                    <Send size={13} className={cn(sendingEmail && "spinner")} />
+                    {sendingEmail ? "Đang gửi..." : "Gửi Email ngay"}
+                  </button>
+                  {sendResult && (
+                    <span className={cn("text-xs flex items-center gap-1", sendResult.success ? "text-green-600" : "text-red-500")}>
+                      {sendResult.success ? <CheckCircle size={13} /> : <XCircle size={13} />}
+                      {sendResult.msg}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           ) : null}
+        </div>
+      )}
+
+      {/* Bulk Email */}
+      {segments.length > 0 && (
+        <div className="card p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+              <Send size={16} className="text-brand-500" /> Gửi Email hàng loạt
+            </h3>
+            <span className="text-xs text-slate-400">{segments.length} khách hàng</span>
+          </div>
+          <input
+            className="input text-sm"
+            placeholder="Tiêu đề email..."
+            value={bulkSubject}
+            onChange={(e) => setBulkSubject(e.target.value)}
+          />
+          <textarea
+            className="textarea h-24 text-sm"
+            placeholder="Nội dung gốc — AI tự tạo variant cho từng CLV tier (Champion / Loyal / Potential / At Risk)..."
+            value={bulkMsg}
+            onChange={(e) => setBulkMsg(e.target.value)}
+          />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={sendBulkEmail}
+              disabled={sendingBulk || !bulkMsg.trim() || !bulkSubject.trim()}
+              className="btn-primary text-sm flex items-center gap-2"
+            >
+              <Send size={13} className={cn(sendingBulk && "spinner")} />
+              {sendingBulk ? "Đang gửi..." : `Gửi tới ${segments.length} khách hàng`}
+            </button>
+            {bulkResult && (
+              <span className={cn("text-xs flex items-center gap-1", bulkResult.failed === 0 ? "text-green-600" : "text-amber-600")}>
+                <CheckCircle size={13} />
+                Gửi thành công: {bulkResult.sent} · Lỗi: {bulkResult.failed}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-400">
+            AI sẽ tạo biến thể nội dung phù hợp cho từng segment trước khi gửi qua SendGrid.
+          </p>
         </div>
       )}
 
