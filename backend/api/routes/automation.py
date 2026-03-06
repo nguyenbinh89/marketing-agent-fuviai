@@ -320,3 +320,98 @@ async def repurpose_content(request: RepurposeRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# EMAIL AUTOMATION — Manual trigger endpoints
+# ═══════════════════════════════════════════════════════════════════════
+
+class BirthdayBatchRequest(BaseModel):
+    customers: list[dict[str, Any]]  # [{"email", "name", "clv_tier", "birthday": "MM-DD"}]
+
+
+class WinbackBatchRequest(BaseModel):
+    customers: list[dict[str, Any]]
+    inactive_threshold_days: int = 90
+
+
+class AbandonedCartBatchRequest(BaseModel):
+    carts: list[dict[str, Any]]  # [{"email", "name", "cart_value", "products", "abandoned_at", ...}]
+
+
+@router.post("/email/birthday")
+async def trigger_birthday_emails(request: BirthdayBatchRequest):
+    """
+    Trigger gửi birthday emails thủ công (Celery task).
+    Tự động chạy hàng ngày lúc 9am — endpoint này để test/force run.
+    """
+    if not request.customers:
+        raise HTTPException(status_code=400, detail="customers không được để trống")
+    if len(request.customers) > 500:
+        raise HTTPException(status_code=400, detail="Tối đa 500 customers mỗi lần")
+    try:
+        from backend.tasks.email_tasks import send_birthday_emails
+        task = send_birthday_emails.delay(request.customers)
+        return {"task_id": task.id, "status": "queued", "customers": len(request.customers)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/email/winback")
+async def trigger_winback_emails(request: WinbackBatchRequest):
+    """
+    Trigger gửi win-back emails thủ công (Celery task).
+    Tự động chạy mỗi thứ Hai 10am.
+    """
+    if not request.customers:
+        raise HTTPException(status_code=400, detail="customers không được để trống")
+    if request.inactive_threshold_days < 1 or request.inactive_threshold_days > 365:
+        raise HTTPException(status_code=400, detail="inactive_threshold_days phải từ 1 đến 365")
+    try:
+        from backend.tasks.email_tasks import send_winback_emails
+        task = send_winback_emails.delay(request.customers, request.inactive_threshold_days)
+        return {
+            "task_id": task.id,
+            "status": "queued",
+            "customers": len(request.customers),
+            "threshold_days": request.inactive_threshold_days,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/email/abandoned-cart")
+async def trigger_abandoned_cart(request: AbandonedCartBatchRequest):
+    """
+    Trigger abandoned cart reminders thủ công (Celery task).
+    Tự động chạy mỗi giờ từ 8am-11pm.
+    """
+    if not request.carts:
+        raise HTTPException(status_code=400, detail="carts không được để trống")
+    if len(request.carts) > 200:
+        raise HTTPException(status_code=400, detail="Tối đa 200 giỏ hàng mỗi lần")
+    try:
+        from backend.tasks.email_tasks import send_abandoned_cart_reminders
+        task = send_abandoned_cart_reminders.delay(request.carts)
+        return {"task_id": task.id, "status": "queued", "carts": len(request.carts)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/email/stats")
+async def get_email_stats(start_date: str = "", end_date: str = ""):
+    """
+    Lấy SendGrid email stats. Format ngày: YYYY-MM-DD.
+    Mặc định: 7 ngày gần nhất.
+    """
+    from datetime import date, timedelta
+    if not start_date:
+        start_date = (date.today() - timedelta(days=7)).isoformat()
+    if not end_date:
+        end_date = date.today().isoformat()
+    try:
+        from backend.tools.email_tool import EmailTool
+        tool = EmailTool()
+        return tool.get_stats(start_date, end_date)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

@@ -700,6 +700,7 @@ Content-Type: application/json
 ###
 
 ### Gửi bulk email với AI variants (phân theo CLV tier)
+# Requires: SENDGRID_API_KEY trong .env
 POST {{base}}/api/commerce/personalize/send-bulk
 Content-Type: application/json
 
@@ -713,6 +714,69 @@ Content-Type: application/json
   "base_message": "FuviAI vừa ra mắt tính năng mới: AI tự động tạo content cho TikTok, Shopee, Google Ads. Giúp tiết kiệm 3 giờ/ngày và tăng doanh thu.",
   "subject": "FuviAI — Tính năng mới tháng 3/2026"
 }
+
+###
+
+# ═══════════════════════════════════════════
+# AUTOMATION — Email Tasks (Celery triggers)
+# ═══════════════════════════════════════════
+
+### Trigger birthday emails (thủ công / Celery tự chạy 9am hàng ngày)
+POST {{base}}/api/automation/email/birthday
+Content-Type: application/json
+
+{
+  "customers": [
+    { "email": "an@example.com", "name": "Nguyễn Văn An", "clv_tier": "champion", "birthday": "03-06" },
+    { "email": "bich@example.com", "name": "Trần Thị Bích", "clv_tier": "loyal", "birthday": "01-15" }
+  ]
+}
+
+###
+
+### Trigger win-back emails (Celery tự chạy thứ Hai 10am)
+POST {{base}}/api/automation/email/winback
+Content-Type: application/json
+
+{
+  "customers": [
+    { "email": "cuong@example.com", "name": "Lê Minh Cường", "clv_tier": "at_risk", "days_since_last_purchase": 95, "total_spent": 3000000 },
+    { "email": "dung@example.com", "name": "Phạm Thị Dung", "clv_tier": "lost", "days_since_last_purchase": 200, "total_spent": 500000 }
+  ],
+  "inactive_threshold_days": 90
+}
+
+###
+
+### Trigger abandoned cart (Celery tự chạy mỗi giờ 8am-11pm)
+POST {{base}}/api/automation/email/abandoned-cart
+Content-Type: application/json
+
+{
+  "carts": [
+    {
+      "email": "khach@example.com",
+      "name": "Khách Hàng Test",
+      "cart_value": 2500000,
+      "products": ["FuviAI Pro", "FuviAI Training Package"],
+      "segment": "potential",
+      "abandoned_at": "2026-03-06T08:00:00",
+      "step_1_sent": false,
+      "step_2_sent": false,
+      "step_3_sent": false
+    }
+  ]
+}
+
+###
+
+### Email stats 7 ngày gần nhất
+GET {{base}}/api/automation/email/stats
+
+###
+
+### Email stats theo khoảng thời gian cụ thể
+GET {{base}}/api/automation/email/stats?start_date=2026-03-01&end_date=2026-03-06
 
 ###
 
