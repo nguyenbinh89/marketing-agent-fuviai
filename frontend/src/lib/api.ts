@@ -396,6 +396,42 @@ export const api = {
   facebookAdsBenchmark: (industry: string = "saas") =>
     request<Record<string, unknown>>(`/api/ads/facebook/benchmark?industry=${industry}`),
 
+  // ─── Zalo OA ──────────────────────────────────────────────────────────────
+  zaloOAInfo: () =>
+    request<Record<string, unknown>>("/api/zalo/info"),
+
+  zaloFollowers: (offset: number = 0, count: number = 50) =>
+    request<Record<string, unknown>>(`/api/zalo/followers?offset=${offset}&count=${count}`),
+
+  zaloFollowerProfile: (userId: string) =>
+    request<Record<string, unknown>>(`/api/zalo/followers/${userId}`),
+
+  zaloSendText: (userId: string, message: string) =>
+    request<{ sent: boolean; user_id: string }>(
+      "/api/zalo/message/text",
+      { method: "POST", body: JSON.stringify({ user_id: userId, message }) }
+    ),
+
+  zaloSendButton: (userId: string, text: string, buttons: Array<{ title: string; payload?: string }>) =>
+    request<{ sent: boolean; user_id: string }>(
+      "/api/zalo/message/button",
+      { method: "POST", body: JSON.stringify({ user_id: userId, text, buttons }) }
+    ),
+
+  zaloBroadcast: (message: string, tagName?: string) =>
+    request<{ sent: boolean; target: string; chars: number }>(
+      "/api/zalo/broadcast",
+      { method: "POST", body: JSON.stringify({ message, tag_name: tagName || null }) }
+    ),
+
+  zaloTags: () =>
+    request<{ count: number; tags: Array<{ name: string; total: number }> }>("/api/zalo/tags"),
+
+  zaloChats: (count: number = 10, offset: number = 0) =>
+    request<{ count: number; chats: Array<Record<string, unknown>> }>(
+      `/api/zalo/chats?count=${count}&offset=${offset}`
+    ),
+
   // ─── Unified Ads ──────────────────────────────────────────────────────────
   unifiedAdsSummary: (days: number = 30) =>
     request<{

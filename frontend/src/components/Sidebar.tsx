@@ -20,6 +20,7 @@ import {
   Target,
   Video,
   Layers,
+  MessageCircle,
 } from "lucide-react";
 
 const NAV = [
@@ -36,6 +37,7 @@ const NAV = [
   { label: "Google Ads", href: "/google-ads", icon: MousePointerClick },
   { label: "Facebook Ads", href: "/facebook-ads", icon: Target },
   { label: "TikTok Ads",   href: "/tiktok-ads",   icon: Video },
+  { label: "Zalo OA",      href: "/zalo-oa",      icon: MessageCircle },
   { label: "Khách hàng", href: "/customers", icon: Users },
   { label: "Compliance", href: "/compliance", icon: ShieldCheck },
   { label: "Campaign Plan AI", href: "/orchestrate", icon: Zap },

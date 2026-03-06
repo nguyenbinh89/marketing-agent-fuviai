@@ -159,6 +159,80 @@ class ZaloOATool:
         except Exception as e:
             return {"error": str(e)}
 
+    # ─── OA Info & Stats ─────────────────────────────────────────────────────
+
+    def get_oa_info(self) -> dict[str, Any]:
+        """Lấy thông tin OA: tên, avatar, follower count, description."""
+        if not self.settings.zalo_oa_access_token:
+            return {"error": "ZALO_OA_ACCESS_TOKEN chưa được set trong .env"}
+        url = f"{ZALO_API_BASE}/getoa"
+        try:
+            resp = self._session.get(url, timeout=10)
+            data = resp.json()
+            oa = data.get("data", data)
+            logger.debug("Zalo OA info fetched")
+            return {
+                "name": oa.get("name", ""),
+                "oa_id": oa.get("oa_id", ""),
+                "avatar": oa.get("avatar", ""),
+                "cover": oa.get("cover", ""),
+                "description": oa.get("description", ""),
+                "num_follower": oa.get("num_follower", 0),
+                "is_verified": oa.get("is_verified", False),
+                "oa_type": oa.get("oa_type", 0),
+            }
+        except Exception as e:
+            logger.error(f"Zalo OA info error: {e}")
+            return {"error": str(e)}
+
+    def get_tags(self) -> list[dict[str, Any]]:
+        """Lấy danh sách tags của OA."""
+        if not self.settings.zalo_oa_access_token:
+            return []
+        url = f"{ZALO_API_BASE}/tag/getallbyoa"
+        try:
+            resp = self._session.get(url, timeout=10)
+            data = resp.json()
+            tags = data.get("data", [])
+            logger.debug(f"Zalo OA tags fetched | count={len(tags)}")
+            return [{"name": t.get("tagName", ""), "total": t.get("totalFollower", 0)} for t in tags]
+        except Exception as e:
+            logger.error(f"Zalo OA tags error: {e}")
+            return []
+
+    def send_broadcast_by_tag(self, tag_name: str, message: str) -> dict[str, Any]:
+        """Broadcast tin nhắn đến followers có tag cụ thể."""
+        payload = {
+            "recipient": {"tag_name": tag_name},
+            "message": {"text": message},
+        }
+        result = self._post("message", payload)
+        logger.info(f"Zalo broadcast by tag | tag={tag_name} | chars={len(message)}")
+        return result
+
+    def get_recent_chats(self, count: int = 10, offset: int = 0) -> list[dict[str, Any]]:
+        """Lấy danh sách hội thoại gần đây."""
+        if not self.settings.zalo_oa_access_token:
+            return []
+        url = f"{ZALO_API_BASE}/listrecentchat"
+        try:
+            resp = self._session.get(url, params={"count": min(count, 50), "offset": offset}, timeout=10)
+            data = resp.json()
+            chats = data.get("data", {}).get("conversations", [])
+            return [
+                {
+                    "user_id": c.get("user_id", ""),
+                    "display_name": c.get("display_name", ""),
+                    "avatar": c.get("avatar", ""),
+                    "last_message": c.get("last_message", ""),
+                    "time": c.get("time", 0),
+                }
+                for c in chats
+            ]
+        except Exception as e:
+            logger.error(f"Zalo recent chats error: {e}")
+            return []
+
     # ─── Webhook Helper ───────────────────────────────────────────────────────
 
     @staticmethod
