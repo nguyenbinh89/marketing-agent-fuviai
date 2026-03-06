@@ -509,6 +509,25 @@ export const api = {
       "/api/commerce/budget/season-boost",
       { method: "POST", body: JSON.stringify({ base_budget: baseBudget, season_key: seasonKey, industry }) }
     ),
+
+  // ─── Notifications ────────────────────────────────────────────────────────
+  notifications: (days: number = 30) =>
+    request<Array<{
+      id: string; type: string; severity: string;
+      title: string; message: string; platform: string | null;
+      timestamp: string; action_url: string | null;
+    }>>(`/api/notifications/?days=${days}`),
+
+  notificationCount: () =>
+    request<{ total: number; critical: number; warning: number; info: number }>(
+      "/api/notifications/count"
+    ),
+
+  notificationsCheck: (days: number = 30) =>
+    request<Array<Record<string, unknown>>>(
+      `/api/notifications/check?days=${days}`,
+      { method: "POST" }
+    ),
 };
 
 // ─── Stream helper ────────────────────────────────────────────────────────────
