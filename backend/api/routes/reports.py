@@ -220,7 +220,8 @@ async def generate_report(req: ReportRequest):
     agent = _get_agent()
     prompt = _build_prompt(data_text, req)
     try:
-        report_md = await agent.chat(prompt)
+        import asyncio
+        report_md = await asyncio.get_event_loop().run_in_executor(None, agent.chat, prompt)
     except Exception as e:
         logger.error(f"Report AI generation failed: {e}")
         raise HTTPException(status_code=503, detail=f"AI generation failed: {e}")

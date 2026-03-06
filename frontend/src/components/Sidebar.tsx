@@ -4,47 +4,62 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard,
-  MessageSquare,
-  Pen,
-  BarChart2,
-  Megaphone,
-  Radio,
-  TrendingUp,
-  Users,
-  ShieldCheck,
-  Zap,
-  Search,
-  ShoppingBag,
-  MousePointerClick,
-  Target,
-  Video,
-  Layers,
-  MessageCircle,
-  Bell,
-  FileText,
+  LayoutDashboard, MessageSquare, Pen, BarChart2,
+  Megaphone, Radio, TrendingUp, Users, ShieldCheck,
+  Zap, Search, ShoppingBag, MousePointerClick,
+  Target, Video, Layers, MessageCircle, Bell, FileText,
 } from "lucide-react";
 
-const NAV = [
-  { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Chat với AI", href: "/chat", icon: MessageSquare },
-  { label: "Tạo Content", href: "/content", icon: Pen },
-  { label: "Nghiên cứu & SEO", href: "/research", icon: Search },
-  { label: "Phân tích Campaign", href: "/campaigns", icon: BarChart2 },
-  { label: "Social Scheduling", href: "/social", icon: Megaphone },
-  { label: "Livestream Coach", href: "/livestream", icon: Radio },
-  { label: "Analytics", href: "/analytics", icon: TrendingUp },
-  { label: "Shopee E-commerce", href: "/shopee", icon: ShoppingBag },
-  { label: "Unified Ads", href: "/ads", icon: Layers },
-  { label: "Google Ads", href: "/google-ads", icon: MousePointerClick },
-  { label: "Facebook Ads", href: "/facebook-ads", icon: Target },
-  { label: "TikTok Ads",   href: "/tiktok-ads",   icon: Video },
-  { label: "Zalo OA",      href: "/zalo-oa",       icon: MessageCircle },
-  { label: "Thông báo",   href: "/notifications", icon: Bell },
-  { label: "Báo cáo AI",  href: "/reports",       icon: FileText },
-  { label: "Khách hàng",  href: "/customers",     icon: Users },
-  { label: "Compliance", href: "/compliance", icon: ShieldCheck },
-  { label: "Campaign Plan AI", href: "/orchestrate", icon: Zap },
+const NAV_GROUPS = [
+  {
+    label: "Tổng quan",
+    items: [
+      { label: "Dashboard",        href: "/",             icon: LayoutDashboard },
+      { label: "Chat với AI",      href: "/chat",         icon: MessageSquare },
+      { label: "Thông báo",        href: "/notifications", icon: Bell },
+    ],
+  },
+  {
+    label: "Nội dung & Kênh",
+    items: [
+      { label: "Tạo Content",      href: "/content",    icon: Pen },
+      { label: "Social Scheduling",href: "/social",     icon: Megaphone },
+      { label: "Livestream Coach", href: "/livestream", icon: Radio },
+      { label: "Zalo OA",          href: "/zalo-oa",    icon: MessageCircle },
+    ],
+  },
+  {
+    label: "Quảng cáo",
+    items: [
+      { label: "Unified Ads",      href: "/ads",          icon: Layers },
+      { label: "Google Ads",       href: "/google-ads",   icon: MousePointerClick },
+      { label: "Facebook Ads",     href: "/facebook-ads", icon: Target },
+      { label: "TikTok Ads",       href: "/tiktok-ads",   icon: Video },
+    ],
+  },
+  {
+    label: "Phân tích & Báo cáo",
+    items: [
+      { label: "Analytics",         href: "/analytics",  icon: TrendingUp },
+      { label: "Phân tích Campaign",href: "/campaigns",  icon: BarChart2 },
+      { label: "Nghiên cứu & SEO",  href: "/research",   icon: Search },
+      { label: "Báo cáo AI",        href: "/reports",    icon: FileText },
+    ],
+  },
+  {
+    label: "Thương mại",
+    items: [
+      { label: "Shopee E-commerce", href: "/shopee",     icon: ShoppingBag },
+      { label: "Khách hàng",        href: "/customers",  icon: Users },
+    ],
+  },
+  {
+    label: "Nâng cao",
+    items: [
+      { label: "Campaign Plan AI",  href: "/orchestrate", icon: Zap },
+      { label: "Compliance",        href: "/compliance",  icon: ShieldCheck },
+    ],
+  },
 ];
 
 export default function Sidebar() {
@@ -60,25 +75,34 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto scrollbar-thin">
-        {NAV.map(({ label, href, icon: Icon }) => {
-          const active = pathname === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                active
-                  ? "bg-brand-50 text-brand-600"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-              )}
-            >
-              <Icon size={16} className={active ? "text-brand-500" : "text-slate-400"} />
+      <nav className="flex-1 py-3 px-3 overflow-y-auto scrollbar-thin">
+        {NAV_GROUPS.map(({ label, items }) => (
+          <div key={label} className="mb-4">
+            <p className="px-3 mb-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
               {label}
-            </Link>
-          );
-        })}
+            </p>
+            <div className="space-y-0.5">
+              {items.map(({ label: itemLabel, href, icon: Icon }) => {
+                const active = pathname === href;
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      active
+                        ? "bg-brand-50 text-brand-600"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    )}
+                  >
+                    <Icon size={16} className={active ? "text-brand-500" : "text-slate-400"} />
+                    {itemLabel}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Footer */}
