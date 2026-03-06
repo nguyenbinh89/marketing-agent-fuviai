@@ -18,8 +18,8 @@
 - **Frontend** — Next.js 14, 10 pages
 
 ### 🔄 Còn lại (Post-Launch)
-- [ ] `backend/tools/search_tool.py` — Web search cho research/listening agents
-- [ ] `backend/tools/tiktok_tool.py` — TikTok for Business API
+- [x] `backend/tools/search_tool.py` — Web search cho research/listening agents
+- [x] `backend/tools/tiktok_tool.py` — TikTok for Business API
 - [ ] `backend/tools/shopee_tool.py` — Shopee Open Platform API
 - [ ] `backend/tools/google_ads_tool.py` — Google Ads API
 - [ ] Monitoring — Sentry error tracking + uptime alert

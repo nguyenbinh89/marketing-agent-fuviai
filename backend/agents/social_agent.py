@@ -14,6 +14,7 @@ from backend.agents.base_agent import BaseAgent
 from backend.agents.content_agent import ContentAgent, Platform, Tone
 from backend.tools.zalo_tool import ZaloOATool
 from backend.tools.facebook_tool import FacebookTool
+from backend.tools.tiktok_tool import TikTokTool
 from backend.config.settings import get_settings
 
 
@@ -98,6 +99,7 @@ class SocialAgent(BaseAgent):
         self._content_agent = ContentAgent()
         self._zalo = ZaloOATool()
         self._facebook = FacebookTool()
+        self._tiktok = TikTokTool()
         self._schedule: list[PostSchedule] = []
 
     # ─── Schedule Tạo Lịch ──────────────────────────────────────────────────
@@ -176,6 +178,16 @@ Format bảng markdown đẹp, dễ copy vào lịch làm việc."""
             else:
                 data = self._zalo.broadcast(content)
             result["status"] = "published" if not data.get("error") else "failed"
+            result["data"] = data
+
+        elif platform == Platform.TIKTOK:
+            # TikTok: content là video_url|title hoặc chỉ title (text-only không hỗ trợ)
+            if "|" in content:
+                video_url, title = content.split("|", 1)
+                data = self._tiktok.publish_video_from_url(video_url.strip(), title.strip())
+            else:
+                data = {"message": "TikTok cần video URL. Format: 'video_url|caption'"}
+            result["status"] = data.get("status", "failed")
             result["data"] = data
 
         else:
