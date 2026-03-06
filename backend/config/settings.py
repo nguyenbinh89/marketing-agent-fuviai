@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     facebook_page_id: str = Field(default="")
     tiktok_access_token: str = Field(default="")
     tiktok_app_id: str = Field(default="")
+    instagram_access_token: str = Field(default="")
+    instagram_business_id: str = Field(default="")
     shopee_partner_id: str = Field(default="")
     shopee_partner_key: str = Field(default="")
     shopee_access_token: str = Field(default="")

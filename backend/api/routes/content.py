@@ -32,6 +32,15 @@ class GenerateRequest(BaseModel):
     cta: str = "Nhắn tin tư vấn ngay"
 
 
+class InstagramRequest(BaseModel):
+    product: str
+    content_type: str = "photo"   # photo | reel | carousel | story
+    tone: Tone = Tone.FRIENDLY
+    target_audience: str = "chủ doanh nghiệp SME Việt Nam"
+    key_benefit: str = ""
+    hashtags_count: int = 20
+
+
 class TikTokRequest(BaseModel):
     product: str
     duration: int = 60
@@ -81,6 +90,32 @@ async def generate_facebook(request: GenerateRequest):
         return ContentResponse(platform="facebook", content=content)
     except Exception as e:
         logger.error(f"Facebook caption error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/generate/instagram", response_model=ContentResponse)
+async def generate_instagram(request: InstagramRequest):
+    """Tạo Instagram caption tối ưu cho photo/reel/carousel/story."""
+    if not request.product.strip():
+        raise HTTPException(status_code=400, detail="Product không được để trống")
+    valid_types = ("photo", "reel", "carousel", "story")
+    if request.content_type not in valid_types:
+        raise HTTPException(status_code=400, detail=f"content_type phải là: {', '.join(valid_types)}")
+    if not 1 <= request.hashtags_count <= 30:
+        raise HTTPException(status_code=400, detail="hashtags_count phải từ 1 đến 30")
+    try:
+        agent = get_content_agent()
+        content = agent.generate_instagram_caption(
+            product=request.product,
+            content_type=request.content_type,
+            tone=request.tone,
+            target_audience=request.target_audience,
+            key_benefit=request.key_benefit,
+            hashtags_count=request.hashtags_count,
+        )
+        return ContentResponse(platform="instagram", content=content)
+    except Exception as e:
+        logger.error(f"Instagram caption error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

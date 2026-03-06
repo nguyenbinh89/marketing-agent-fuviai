@@ -5,7 +5,7 @@ import { Copy, RefreshCw, Check } from "lucide-react";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-type Platform = "facebook" | "tiktok" | "zalo" | "email" | "campaign";
+type Platform = "facebook" | "instagram" | "tiktok" | "zalo" | "email" | "campaign";
 
 const TONES = [
   { value: "than_thien", label: "Thân thiện" },
@@ -14,11 +14,19 @@ const TONES = [
 ];
 
 const PLATFORMS: { value: Platform; label: string; color: string }[] = [
-  { value: "facebook", label: "Facebook", color: "bg-blue-50 border-blue-300 text-blue-700" },
-  { value: "tiktok", label: "TikTok", color: "bg-slate-50 border-slate-300 text-slate-700" },
-  { value: "zalo", label: "Zalo OA", color: "bg-sky-50 border-sky-300 text-sky-700" },
-  { value: "email", label: "Email", color: "bg-amber-50 border-amber-300 text-amber-700" },
-  { value: "campaign", label: "Multi-platform", color: "bg-purple-50 border-purple-300 text-purple-700" },
+  { value: "facebook",  label: "Facebook",       color: "bg-blue-50 border-blue-300 text-blue-700" },
+  { value: "instagram", label: "Instagram",       color: "bg-pink-50 border-pink-300 text-pink-700" },
+  { value: "tiktok",    label: "TikTok",          color: "bg-slate-50 border-slate-300 text-slate-700" },
+  { value: "zalo",      label: "Zalo OA",         color: "bg-sky-50 border-sky-300 text-sky-700" },
+  { value: "email",     label: "Email",           color: "bg-amber-50 border-amber-300 text-amber-700" },
+  { value: "campaign",  label: "Multi-platform",  color: "bg-purple-50 border-purple-300 text-purple-700" },
+];
+
+const INSTAGRAM_TYPES = [
+  { value: "photo",     label: "Ảnh" },
+  { value: "reel",      label: "Reel" },
+  { value: "carousel",  label: "Carousel" },
+  { value: "story",     label: "Story" },
 ];
 
 export default function ContentPage() {
@@ -26,6 +34,7 @@ export default function ContentPage() {
   const [product, setProduct] = useState("");
   const [tone, setTone] = useState("than_thien");
   const [extra, setExtra] = useState("");
+  const [igType, setIgType] = useState("photo");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -39,6 +48,15 @@ export default function ContentPage() {
       if (platform === "facebook") {
         const res = await api.generateFacebook({ product, tone, key_benefit: extra });
         content = res.content;
+      } else if (platform === "instagram") {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/api/content/generate/instagram`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ product, content_type: igType, tone, key_benefit: extra }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Lỗi tạo Instagram caption");
+        content = data.content;
       } else if (platform === "tiktok") {
         const res = await api.generateTikTok({ product, hook_style: extra || undefined });
         content = res.content;
@@ -114,8 +132,8 @@ export default function ContentPage() {
             />
           </div>
 
-          {/* Tone (only for Facebook) */}
-          {platform === "facebook" && (
+          {/* Tone (Facebook + Instagram) */}
+          {(platform === "facebook" || platform === "instagram") && (
             <div>
               <label className="text-sm font-medium text-slate-700 block mb-1.5">Tone</label>
               <select className="input" value={tone} onChange={(e) => setTone(e.target.value)}>
@@ -126,10 +144,34 @@ export default function ContentPage() {
             </div>
           )}
 
+          {/* Instagram content type */}
+          {platform === "instagram" && (
+            <div>
+              <label className="text-sm font-medium text-slate-700 block mb-1.5">Loại nội dung</label>
+              <div className="flex gap-2 flex-wrap">
+                {INSTAGRAM_TYPES.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => setIgType(value)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors",
+                      igType === value
+                        ? "bg-pink-50 border-pink-300 text-pink-700"
+                        : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Extra context */}
           <div>
             <label className="text-sm font-medium text-slate-700 block mb-1.5">
               {platform === "facebook" ? "Lợi ích chính" :
+               platform === "instagram" ? "Lợi ích / Key message" :
                platform === "tiktok" ? "Hook style" :
                platform === "zalo" ? "Offer / Ưu đãi" :
                platform === "email" ? "Target segment" :
@@ -139,6 +181,7 @@ export default function ContentPage() {
               className="input"
               placeholder={
                 platform === "facebook" ? "VD: Tiết kiệm 3 giờ/ngày" :
+                platform === "instagram" ? "VD: Tăng doanh thu 3x trong 30 ngày" :
                 platform === "tiktok" ? "VD: câu hỏi gây tò mò" :
                 platform === "zalo" ? "VD: Giảm 30% trong tháng 3" :
                 platform === "email" ? "VD: giám đốc marketing SME" :

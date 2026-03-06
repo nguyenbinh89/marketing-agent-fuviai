@@ -176,6 +176,45 @@ Content-Type: application/json
 
 ###
 
+### Instagram Caption — Photo
+POST {{base}}/api/content/generate/instagram
+Content-Type: application/json
+
+{
+  "product": "FuviAI Marketing Agent — AI tự động hoá marketing",
+  "content_type": "photo",
+  "tone": "than_thien",
+  "key_benefit": "Tăng doanh thu 3x trong 30 ngày",
+  "hashtags_count": 20
+}
+
+###
+
+### Instagram Caption — Reel
+POST {{base}}/api/content/generate/instagram
+Content-Type: application/json
+
+{
+  "product": "FuviAI Marketing Agent",
+  "content_type": "reel",
+  "tone": "gen_z",
+  "key_benefit": "AI viết content thay bạn trong 10 giây"
+}
+
+###
+
+### Instagram Caption — Carousel
+POST {{base}}/api/content/generate/instagram
+Content-Type: application/json
+
+{
+  "product": "FuviAI Marketing Agent",
+  "content_type": "carousel",
+  "key_benefit": "5 tính năng AI giúp tăng doanh thu"
+}
+
+###
+
 ### TikTok Script
 POST {{base}}/api/content/generate/tiktok
 Content-Type: application/json

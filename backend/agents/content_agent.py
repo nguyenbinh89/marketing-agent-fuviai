@@ -15,6 +15,7 @@ from backend.config.prompts_vn import CONTENT_AGENT_SYSTEM
 
 class Platform(str, Enum):
     FACEBOOK = "facebook"
+    INSTAGRAM = "instagram"
     TIKTOK = "tiktok"
     ZALO = "zalo"
     EMAIL = "email"
@@ -79,6 +80,51 @@ Yêu cầu:
 - Gợi ý thời điểm đăng tốt nhất"""
 
         logger.info(f"Generating Facebook caption | product={product[:50]}")
+        return self.chat(prompt)
+
+    # ─── Instagram ──────────────────────────────────────────────────────────
+
+    def generate_instagram_caption(
+        self,
+        product: str,
+        content_type: Literal["photo", "reel", "carousel", "story"] = "photo",
+        tone: Tone = Tone.FRIENDLY,
+        target_audience: str = "chủ doanh nghiệp SME Việt Nam",
+        key_benefit: str = "",
+        hashtags_count: int = 20,
+    ) -> str:
+        """
+        Tạo caption Instagram tối ưu cho từng content type.
+
+        Args:
+            content_type: photo | reel | carousel | story
+        """
+        type_guide = {
+            "photo": "Caption 150-220 chữ, storytelling ngắn, emotional hook",
+            "reel": "Caption 80-150 chữ, hook mạnh 1 câu đầu, CTA rõ ràng (dừng lại, follow, share)",
+            "carousel": "Caption 200-300 chữ, preview 3-5 điểm chính trong slide, 'Swipe → để xem thêm'",
+            "story": "Caption ngắn 20-50 chữ, dùng sticker/poll nếu có, link in bio hoặc CTA swipe up",
+        }
+
+        prompt = f"""Viết Instagram {content_type} caption cho sản phẩm/dịch vụ:
+
+**Sản phẩm:** {product}
+**Loại nội dung:** {content_type.upper()}
+**Tone:** {'thân thiện, gần gũi' if tone == Tone.FRIENDLY else 'chuyên nghiệp B2B' if tone == Tone.PROFESSIONAL else 'Gen Z trendy'}
+**Đối tượng:** {target_audience}
+**Lợi ích chính:** {key_benefit or "tự xác định từ sản phẩm"}
+
+**Hướng dẫn caption {content_type}:** {type_guide[content_type]}
+
+Yêu cầu:
+- Câu đầu tiên là hook — phải dừng scroll ngay
+- Dùng line break để dễ đọc trên mobile
+- Kết thúc bằng CTA rõ ràng
+- {hashtags_count} hashtags mix: 5 branded (FuviAI, MarketingVN...) + 10 niche + 5 trending VN
+- Gợi ý 1 caption A/B test thay thế
+- Thời điểm đăng tốt nhất cho Instagram VN"""
+
+        logger.info(f"Generating Instagram {content_type} caption | product={product[:50]}")
         return self.chat(prompt)
 
     # ─── TikTok ─────────────────────────────────────────────────────────────

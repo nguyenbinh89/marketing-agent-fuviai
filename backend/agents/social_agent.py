@@ -15,6 +15,7 @@ from backend.agents.content_agent import ContentAgent, Platform, Tone
 from backend.tools.zalo_tool import ZaloOATool
 from backend.tools.facebook_tool import FacebookTool
 from backend.tools.tiktok_tool import TikTokTool
+from backend.tools.instagram_tool import InstagramTool
 from backend.config.settings import get_settings
 
 
@@ -100,6 +101,7 @@ class SocialAgent(BaseAgent):
         self._zalo = ZaloOATool()
         self._facebook = FacebookTool()
         self._tiktok = TikTokTool()
+        self._instagram = InstagramTool()
         self._schedule: list[PostSchedule] = []
 
     # ─── Schedule Tạo Lịch ──────────────────────────────────────────────────
@@ -188,6 +190,29 @@ Format bảng markdown đẹp, dễ copy vào lịch làm việc."""
             else:
                 data = {"message": "TikTok cần video URL. Format: 'video_url|caption'"}
             result["status"] = data.get("status", "failed")
+            result["data"] = data
+
+        elif platform == Platform.INSTAGRAM:
+            # Instagram: hỗ trợ 3 format:
+            # "image_url|caption"       → photo post
+            # "reel:video_url|caption"  → Reel
+            # "story:image_url"         → Story
+            if content.startswith("reel:"):
+                rest = content[5:]
+                if "|" in rest:
+                    video_url, caption = rest.split("|", 1)
+                    data = self._instagram.publish_reel(video_url.strip(), caption.strip())
+                else:
+                    data = self._instagram.publish_reel(rest.strip())
+            elif content.startswith("story:"):
+                image_url = content[6:].strip()
+                data = self._instagram.publish_story_photo(image_url)
+            elif "|" in content:
+                image_url, caption = content.split("|", 1)
+                data = self._instagram.publish_photo(image_url.strip(), caption.strip())
+            else:
+                data = {"message": "Instagram: 'image_url|caption', 'reel:url|caption', hoặc 'story:url'"}
+            result["status"] = "published" if "id" in data else "failed"
             result["data"] = data
 
         else:
