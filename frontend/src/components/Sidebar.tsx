@@ -22,6 +22,7 @@ import {
   Layers,
   MessageCircle,
   Bell,
+  FileText,
 } from "lucide-react";
 
 const NAV = [
@@ -40,6 +41,7 @@ const NAV = [
   { label: "TikTok Ads",   href: "/tiktok-ads",   icon: Video },
   { label: "Zalo OA",      href: "/zalo-oa",       icon: MessageCircle },
   { label: "Thông báo",   href: "/notifications", icon: Bell },
+  { label: "Báo cáo AI",  href: "/reports",       icon: FileText },
   { label: "Khách hàng",  href: "/customers",     icon: Users },
   { label: "Compliance", href: "/compliance", icon: ShieldCheck },
   { label: "Campaign Plan AI", href: "/orchestrate", icon: Zap },

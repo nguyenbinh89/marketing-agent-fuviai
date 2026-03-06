@@ -528,6 +528,32 @@ export const api = {
       `/api/notifications/check?days=${days}`,
       { method: "POST" }
     ),
+
+  // ─── Reports ──────────────────────────────────────────────────────────────
+  reportTemplates: () =>
+    request<{ templates: Array<{ type: string; label: string; description: string; recommended_days: number }> }>(
+      "/api/reports/templates"
+    ),
+
+  generateReport: (payload: {
+    report_type: string;
+    days: number;
+    brand_name: string;
+    industry: string;
+    include_google: boolean;
+    include_facebook: boolean;
+    include_tiktok: boolean;
+    extra_notes: string;
+  }) =>
+    request<{
+      report_type: string;
+      days: number;
+      brand_name: string;
+      generated_at: string;
+      platforms_included: string[];
+      report_markdown: string;
+      word_count: number;
+    }>("/api/reports/generate", { method: "POST", body: JSON.stringify(payload) }),
 };
 
 // ─── Stream helper ────────────────────────────────────────────────────────────
