@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     facebook_ad_account_id: str = Field(default="", description="Facebook Ad Account ID (dạng act_XXXXXXXXX)")
     tiktok_access_token: str = Field(default="")
     tiktok_app_id: str = Field(default="")
+    tiktok_ads_access_token: str = Field(default="", description="TikTok Ads Manager Access Token")
+    tiktok_ads_advertiser_id: str = Field(default="", description="TikTok Ads Advertiser ID")
     instagram_access_token: str = Field(default="")
     instagram_business_id: str = Field(default="")
     shopee_partner_id: str = Field(default="")

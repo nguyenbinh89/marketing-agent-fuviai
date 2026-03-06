@@ -396,6 +396,60 @@ export const api = {
   facebookAdsBenchmark: (industry: string = "saas") =>
     request<Record<string, unknown>>(`/api/ads/facebook/benchmark?industry=${industry}`),
 
+  // ─── TikTok Ads ───────────────────────────────────────────────────────────
+  tiktokAdsCampaigns: (status: string = "CAMPAIGN_STATUS_ENABLE") =>
+    request<{ status: string; count: number; campaigns: Array<Record<string, unknown>> }>(
+      `/api/ads/tiktok/campaigns?status=${status}`
+    ),
+
+  tiktokAdsUpdateStatus: (campaignId: string, status: "ENABLE" | "DISABLE") =>
+    request<{ campaign_id: string; new_status: string }>(
+      "/api/ads/tiktok/campaigns/status",
+      { method: "PATCH", body: JSON.stringify({ campaign_id: campaignId, status }) }
+    ),
+
+  tiktokAdsUpdateBudget: (campaignId: string, budgetVnd: number) =>
+    request<{ campaign_id: string; budget_vnd: number }>(
+      "/api/ads/tiktok/campaigns/budget",
+      { method: "PATCH", body: JSON.stringify({ campaign_id: campaignId, budget_vnd: budgetVnd }) }
+    ),
+
+  tiktokAdsAdgroups: (campaignId?: string) =>
+    request<{ count: number; adgroups: Array<Record<string, unknown>> }>(
+      `/api/ads/tiktok/adgroups${campaignId ? `?campaign_id=${campaignId}` : ""}`
+    ),
+
+  tiktokAdsAds: (campaignId?: string) =>
+    request<{ count: number; ads: Array<Record<string, unknown>> }>(
+      `/api/ads/tiktok/ads${campaignId ? `?campaign_id=${campaignId}` : ""}`
+    ),
+
+  tiktokAdsAccountInsights: (days: number = 30) =>
+    request<Record<string, unknown>>(`/api/ads/tiktok/insights/account?days=${days}`),
+
+  tiktokAdsCampaignInsights: (days: number = 7) =>
+    request<{ days: number; count: number; rows: Array<Record<string, unknown>> }>(
+      `/api/ads/tiktok/insights/campaigns?days=${days}`
+    ),
+
+  tiktokAdsAdgroupInsights: (days: number = 7) =>
+    request<{ days: number; count: number; rows: Array<Record<string, unknown>> }>(
+      `/api/ads/tiktok/insights/adgroups?days=${days}`
+    ),
+
+  tiktokAdsAdInsights: (days: number = 7) =>
+    request<{ days: number; count: number; rows: Array<Record<string, unknown>> }>(
+      `/api/ads/tiktok/insights/ads?days=${days}`
+    ),
+
+  tiktokAdsAudience: (days: number = 30, breakdown: string = "age") =>
+    request<{ days: number; breakdown: string; count: number; rows: Array<Record<string, unknown>> }>(
+      `/api/ads/tiktok/insights/audience?days=${days}&breakdown=${breakdown}`
+    ),
+
+  tiktokAdsBenchmark: (industry: string = "saas") =>
+    request<Record<string, unknown>>(`/api/ads/tiktok/benchmark?industry=${industry}`),
+
   // ─── Budget ───────────────────────────────────────────────────────────────
   getSeasonCalendar: () =>
     request<{ calendar: Record<string, unknown> }>("/api/commerce/budget/season-calendar"),
