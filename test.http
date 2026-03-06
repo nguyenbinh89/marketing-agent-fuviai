@@ -158,6 +158,18 @@ Content-Type: application/json
   "url": "https://vnexpress.net/kinh-doanh"
 }
 
+###
+
+### Tìm kiếm thị trường theo từ khoá
+POST {{base}}/api/research/search
+Content-Type: application/json
+
+{
+  "query": "AI marketing automation Việt Nam 2026",
+  "days": 7,
+  "max_results": 8
+}
+
 # ═══════════════════════════════════════════
 # SEO
 # ═══════════════════════════════════════════
@@ -226,6 +238,11 @@ POST {{base}}/api/analytics/competitors/Haravan/snapshot
 
 ### Kiểm tra thay đổi
 GET {{base}}/api/analytics/competitors/Haravan/changes
+
+###
+
+### Tin tức mới nhất về đối thủ
+GET {{base}}/api/analytics/competitors/Haravan/news?days=30&max_results=8
 
 ###
 

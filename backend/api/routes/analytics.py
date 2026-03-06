@@ -205,6 +205,19 @@ async def benchmark_engagement(request: BenchmarkRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/competitors/{name}/news")
+async def get_competitor_news(name: str, days: int = 30, max_results: int = 8):
+    """Tìm kiếm tin tức mới nhất về đối thủ trên web."""
+    if not 1 <= days <= 365:
+        raise HTTPException(status_code=400, detail="days phải trong khoảng 1-365")
+    try:
+        agent = get_competitor_agent()
+        news = agent.search_competitor_news(name, days=days, max_results=max_results)
+        return {"competitor": name, "days": days, "news": news, "total": len(news)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/competitors/daily-scan")
 async def trigger_daily_scan(background_tasks: BackgroundTasks):
     """Trigger daily competitor scan thủ công (chạy background)."""

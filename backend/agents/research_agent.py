@@ -16,6 +16,7 @@ from bs4 import BeautifulSoup
 from backend.agents.base_agent import BaseAgent
 from backend.config.prompts_vn import RESEARCH_AGENT_SYSTEM
 from backend.memory.vector_store import VectorStore
+from backend.tools.search_tool import SearchTool
 
 
 # ─── News Sources cấu hình ─────────────────────────────────────────────────
@@ -74,6 +75,7 @@ class ResearchAgent(BaseAgent):
         self.vector_store = VectorStore()
         self._session = requests.Session()
         self._session.headers.update(HEADERS)
+        self._search = SearchTool()
 
     # ─── Crawling ───────────────────────────────────────────────────────────
 
@@ -232,6 +234,52 @@ Phân loại thành:
 3. Question keywords (câu hỏi) — 3 từ khoá
 
 Ước tính search intent và mức độ cạnh tranh (cao/trung bình/thấp)."""
+
+        return self.chat(prompt, reset_history=True)
+
+    def search_market(self, query: str, days: int = 7, max_results: int = 8) -> str:
+        """
+        Tìm kiếm thông tin thị trường theo từ khoá + thời gian.
+        Lưu kết quả vào ChromaDB và trả về tóm tắt AI.
+
+        Args:
+            query: Từ khoá tìm kiếm (VD: "AI marketing Việt Nam 2026")
+            days: Giới hạn kết quả trong N ngày gần nhất (chỉ có tác dụng với Google CSE)
+            max_results: Số kết quả tối đa
+        """
+        logger.info(f"Search market | query='{query}' | days={days}")
+
+        response = self._search.search_news(query, days=days, max_results=max_results)
+
+        if not response.success:
+            return f"Không tìm thấy kết quả cho: '{query}'. Lỗi: {response.error}"
+
+        # Lưu vào vector store
+        articles = [
+            {
+                "title": r.title,
+                "text": f"{r.title}. {r.snippet}",
+                "source": r.source,
+                "url": r.url,
+                "date": r.published_at or date.today().isoformat(),
+                "category": "search_result",
+            }
+            for r in response.results
+            if r.title and r.snippet
+        ]
+        if articles:
+            self.vector_store.add_documents(articles)
+
+        # Tổng hợp bằng Claude
+        context = self._search.format_results_for_llm(response)
+        prompt = f"""Tóm tắt và phân tích các kết quả tìm kiếm sau về chủ đề: "{query}"
+
+{context}
+
+Cung cấp:
+1. **Tóm tắt chính** (3-5 điểm quan trọng nhất)
+2. **Xu hướng nổi bật** từ các nguồn này
+3. **Insight cho marketing** — doanh nghiệp SME Việt Nam nên lưu ý gì?"""
 
         return self.chat(prompt, reset_history=True)
 

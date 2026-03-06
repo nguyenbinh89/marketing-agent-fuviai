@@ -40,7 +40,7 @@ WORKDIR /app
 
 COPY --from=builder /root/.local /home/fuviai/.local
 COPY --chown=fuviai:fuviai backend/ ./backend/
-COPY --chown=fuviai:fuviai run.py pytest.ini ./
+COPY --chown=fuviai:fuviai run.py ./
 
 RUN mkdir -p data/chroma && chown -R fuviai:fuviai data/
 

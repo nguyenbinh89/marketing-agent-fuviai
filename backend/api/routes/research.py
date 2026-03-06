@@ -47,6 +47,12 @@ class KeywordRequest(BaseModel):
     target_location: str = "Việt Nam"
 
 
+class SearchMarketRequest(BaseModel):
+    query: str
+    days: int = 7
+    max_results: int = 8
+
+
 class SummarizeRequest(BaseModel):
     url: str
 
@@ -124,6 +130,28 @@ async def research_keywords(request: KeywordRequest):
         )
         return {"topic": request.topic, "keywords": result}
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/search")
+async def search_market(request: SearchMarketRequest):
+    """Tìm kiếm thông tin thị trường theo từ khoá — DuckDuckGo/Google + AI tóm tắt."""
+    if not request.query.strip():
+        raise HTTPException(status_code=400, detail="query không được để trống")
+    if not 1 <= request.days <= 90:
+        raise HTTPException(status_code=400, detail="days phải trong khoảng 1-90")
+    if not 1 <= request.max_results <= 20:
+        raise HTTPException(status_code=400, detail="max_results phải trong khoảng 1-20")
+    try:
+        agent = get_research_agent()
+        summary = agent.search_market(
+            query=request.query,
+            days=request.days,
+            max_results=request.max_results,
+        )
+        return {"query": request.query, "days": request.days, "summary": summary}
+    except Exception as e:
+        logger.error(f"Search market error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

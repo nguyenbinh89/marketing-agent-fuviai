@@ -14,6 +14,7 @@ from backend.agents.base_agent import BaseAgent
 from backend.agents.content_agent import ContentAgent, Platform, Tone
 from backend.agents.insight_agent import InsightAgent
 from backend.tools.scraper_tool import ScraperTool
+from backend.tools.search_tool import SearchTool
 from backend.tools.zalo_tool import ZaloOATool
 
 
@@ -100,6 +101,7 @@ class ListeningAgent(BaseAgent):
             temperature=0.4,
         )
         self._scraper = ScraperTool()
+        self._search = SearchTool()
         self._content_agent = ContentAgent()
         self._insight_agent = InsightAgent()
         self._zalo = ZaloOATool()
@@ -128,7 +130,7 @@ class ListeningAgent(BaseAgent):
         keywords = INDUSTRY_KEYWORDS.get(industry, INDUSTRY_KEYWORDS["marketing"])
 
         # Thu thập tin tức
-        raw_articles = self._collect_news_articles()
+        raw_articles = self._collect_news_articles(industry=industry)
 
         # Lọc theo keyword ngành
         relevant = self._filter_by_keywords(raw_articles, keywords)
@@ -165,7 +167,7 @@ class ListeningAgent(BaseAgent):
         Trả về list trends theo thứ tự volume giảm dần.
         """
         if sources is None:
-            sources = ["cafef", "vnexpress"]
+            sources = ["cafef", "vnexpress", "search"]
 
         all_articles = self._collect_news_articles()
         results = []
@@ -176,6 +178,16 @@ class ListeningAgent(BaseAgent):
                 a for a in all_articles
                 if kw_lower in a.get("title", "").lower()
             ]
+
+            # Bổ sung kết quả từ SearchTool nếu volume thấp
+            if len(matching) < 3:
+                try:
+                    search_resp = self._search.search_news(kw_lower, days=7, max_results=5)
+                    for r in search_resp.results:
+                        if r.title and kw_lower in r.title.lower():
+                            matching.append({"title": r.title, "url": r.url, "source": r.source})
+                except Exception as e:
+                    logger.debug(f"Search fallback failed for '{kw}': {e}")
 
             if matching:
                 texts = [a["title"] for a in matching]
@@ -198,8 +210,8 @@ class ListeningAgent(BaseAgent):
         logger.info(f"Keywords monitored: {len(keywords)} | trends found: {len(results)}")
         return results
 
-    def _collect_news_articles(self) -> list[dict[str, str]]:
-        """Thu thập bài viết từ CafeF và VnExpress."""
+    def _collect_news_articles(self, industry: str = "marketing") -> list[dict[str, str]]:
+        """Thu thập bài viết từ CafeF, VnExpress và SearchTool."""
         articles = []
         try:
             articles.extend(self._scraper.scrape_cafef_headlines(max_articles=15))
@@ -209,6 +221,23 @@ class ListeningAgent(BaseAgent):
             articles.extend(self._scraper.scrape_vnexpress_business(max_articles=15))
         except Exception as e:
             logger.warning(f"VnExpress scrape failed: {e}")
+
+        # Bổ sung từ SearchTool — tìm tin tức ngành trong 3 ngày gần nhất
+        keywords = INDUSTRY_KEYWORDS.get(industry, INDUSTRY_KEYWORDS["marketing"])
+        search_query = " OR ".join(keywords[:3])
+        try:
+            search_resp = self._search.search_news(search_query, days=3, max_results=10)
+            for r in search_resp.results:
+                if r.title:
+                    articles.append({
+                        "title": r.title,
+                        "url": r.url,
+                        "source": r.source or "search",
+                        "snippet": r.snippet,
+                    })
+        except Exception as e:
+            logger.warning(f"SearchTool collect failed: {e}")
+
         return articles
 
     def _filter_by_keywords(

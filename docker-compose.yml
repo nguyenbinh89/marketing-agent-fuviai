@@ -97,7 +97,7 @@ services:
     image: fuviai/marketing-agent:latest
     container_name: fuviai_celery_beat
     restart: unless-stopped
-    command: celery -A backend.tasks.celery_app beat --loglevel=info
+    command: celery -A backend.tasks.celery_app beat --loglevel=info --schedule=/app/data/celerybeat-schedule
     env_file:
       - .env
     environment:

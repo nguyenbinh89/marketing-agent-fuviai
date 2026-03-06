@@ -13,6 +13,7 @@ from loguru import logger
 
 from backend.agents.base_agent import BaseAgent
 from backend.tools.scraper_tool import ScraperTool
+from backend.tools.search_tool import SearchTool
 
 
 COMPETITOR_SYSTEM = """Bạn là Competitive Intelligence Analyst của FuviAI, theo dõi và phân tích \
@@ -84,6 +85,7 @@ class CompetitorAgent(BaseAgent):
             temperature=0.3,
         )
         self._scraper = ScraperTool()
+        self._search = SearchTool()
         self._competitors: dict[str, CompetitorProfile] = {}
 
     # ─── Competitor Management ────────────────────────────────────────────────
@@ -181,6 +183,33 @@ Trả lời súc tích, hành động được ngay."""
 
         return self.chat(prompt, reset_history=True)
 
+    def search_competitor_news(
+        self,
+        name: str,
+        days: int = 30,
+        max_results: int = 8,
+    ) -> list[dict[str, str]]:
+        """
+        Tìm kiếm tin tức về đối thủ trên web trong N ngày gần nhất.
+
+        Args:
+            name: Tên đối thủ (cũng dùng làm query)
+            days: Số ngày tìm kiếm
+            max_results: Số kết quả tối đa
+        """
+        response = self._search.search_news(name, days=days, max_results=max_results)
+        logger.info(f"Competitor news search | name={name} | found={len(response.results)}")
+        return [
+            {
+                "title": r.title,
+                "url": r.url,
+                "snippet": r.snippet,
+                "source": r.source,
+                "published_at": r.published_at,
+            }
+            for r in response.results
+        ]
+
     # ─── Daily Scan ───────────────────────────────────────────────────────────
 
     def daily_scan(self) -> dict[str, Any]:
@@ -248,6 +277,12 @@ Trả lời súc tích, hành động được ngay."""
         latest = profile.snapshots[-1] if profile.snapshots else {}
         history_count = len(profile.snapshots)
 
+        # Tìm tin tức mới về đối thủ
+        news_items = self.search_competitor_news(name, days=30, max_results=6)
+        news_str = "\n".join(
+            f"- {n['title']} ({n['source']})" for n in news_items
+        ) if news_items else "Không tìm thấy tin tức."
+
         prompt = f"""Phân tích toàn diện đối thủ cạnh tranh: **{name}**
 
 **Thông tin cơ bản:**
@@ -260,6 +295,9 @@ Trả lời súc tích, hành động được ngay."""
 - Title: {latest.get('title', 'N/A')}
 - Headings: {', '.join(latest.get('headings', [])[:5])}
 - Mentions giá: {', '.join(latest.get('price_mentions', [])[:5]) or 'Không có'}
+
+**Tin tức gần đây (30 ngày):**
+{news_str}
 
 **Context thêm:** {additional_context or "Không có"}
 
