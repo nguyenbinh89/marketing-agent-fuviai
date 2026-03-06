@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Zap,
   Search,
+  ShoppingBag,
 } from "lucide-react";
 
 const NAV = [
@@ -26,6 +27,7 @@ const NAV = [
   { label: "Social Scheduling", href: "/social", icon: Megaphone },
   { label: "Livestream Coach", href: "/livestream", icon: Radio },
   { label: "Analytics", href: "/analytics", icon: TrendingUp },
+  { label: "Shopee E-commerce", href: "/shopee", icon: ShoppingBag },
   { label: "Khách hàng", href: "/customers", icon: Users },
   { label: "Compliance", href: "/compliance", icon: ShieldCheck },
   { label: "Campaign Plan AI", href: "/orchestrate", icon: Zap },

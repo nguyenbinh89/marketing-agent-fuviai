@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from backend.config.settings import get_settings
-from backend.api.routes import agents, content, research, analytics, automation, commerce, customers
+from backend.api.routes import agents, content, research, analytics, automation, commerce, customers, shopee
 from backend.api.middleware import RateLimitMiddleware, RequestLoggingMiddleware
 from backend.monitoring import init_sentry, sentry_capture_exception
 
@@ -68,6 +68,7 @@ def create_app() -> FastAPI:
     app.include_router(automation.router, prefix="/api/automation", tags=["Automation"])
     app.include_router(commerce.router,   prefix="/api/commerce",   tags=["Commerce & AI Orchestrator"])
     app.include_router(customers.router,  prefix="/api/customers",  tags=["Customers & Email Logs"])
+    app.include_router(shopee.router,     prefix="/api/shopee",     tags=["Shopee E-commerce"])
 
     # ─── Health & Meta ────────────────────────────────────────────────────────
     @app.get("/health", tags=["System"])

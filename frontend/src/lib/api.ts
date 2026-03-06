@@ -260,6 +260,43 @@ export const api = {
       { method: "POST", body: JSON.stringify({ customers, base_message: baseMessage, subject }) }
     ),
 
+  // ─── Shopee ───────────────────────────────────────────────────────────────
+  shopeeShop: () => request<Record<string, unknown>>("/api/shopee/shop"),
+  shopeePerformance: () => request<Record<string, unknown>>("/api/shopee/performance"),
+  shopeeRevenue: (days?: number) =>
+    request<{ days: number; total_completed_orders: number; total_cancelled_orders: number; cancellation_rate: number }>(
+      `/api/shopee/revenue${days ? `?days=${days}` : ""}`
+    ),
+  shopeeProducts: (pageSize?: number) =>
+    request<Array<Record<string, unknown>>>(`/api/shopee/products${pageSize ? `?page_size=${pageSize}` : ""}`),
+  shopeeTopProducts: (limit?: number) =>
+    request<Array<Record<string, unknown>>>(`/api/shopee/products/top${limit ? `?limit=${limit}` : ""}`),
+  shopeeOrders: (days?: number, status?: string) =>
+    request<{ days: number; status: string; count: number; orders: Array<Record<string, unknown>> }>(
+      `/api/shopee/orders?days=${days || 7}&status=${status || "READY_TO_SHIP"}`
+    ),
+  shopeeVouchers: (status?: string) =>
+    request<{ status: string; count: number; vouchers: Array<Record<string, unknown>> }>(
+      `/api/shopee/vouchers?status=${status || "ongoing"}`
+    ),
+  shopeeCreateVoucher: (payload: { discount_pct: number; min_spend?: number; usage_limit?: number; voucher_name?: string }) =>
+    request<{ created: boolean; discount_pct: number }>(
+      "/api/shopee/vouchers",
+      { method: "POST", body: JSON.stringify(payload) }
+    ),
+  shopeeAds: () =>
+    request<{ count: number; campaigns: Array<Record<string, unknown>> }>("/api/shopee/ads"),
+  shopeeUpdateAdsBudget: (campaignId: number, dailyBudget: number) =>
+    request<{ updated: boolean }>(
+      "/api/shopee/ads/budget",
+      { method: "PATCH", body: JSON.stringify({ campaign_id: campaignId, daily_budget: dailyBudget }) }
+    ),
+  shopeeUpdatePrice: (itemId: number, price: number) =>
+    request<{ updated: boolean; item_id: number; new_price: number }>(
+      "/api/shopee/products/price",
+      { method: "PATCH", body: JSON.stringify({ item_id: itemId, price }) }
+    ),
+
   // ─── Budget ───────────────────────────────────────────────────────────────
   getSeasonCalendar: () =>
     request<{ calendar: Record<string, unknown> }>("/api/commerce/budget/season-calendar"),
