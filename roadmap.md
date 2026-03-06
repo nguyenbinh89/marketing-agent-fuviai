@@ -20,7 +20,7 @@
 ### 🔄 Còn lại (Post-Launch)
 - [x] `backend/tools/search_tool.py` — Web search cho research/listening agents
 - [x] `backend/tools/tiktok_tool.py` — TikTok for Business API
-- [ ] `backend/tools/shopee_tool.py` — Shopee Open Platform API
+- [x] `backend/tools/shopee_tool.py` — Shopee Open Platform API
 - [ ] `backend/tools/google_ads_tool.py` — Google Ads API
 - [ ] Monitoring — Sentry error tracking + uptime alert
 - [ ] Onboard 3 beta users từ 500+ khách hàng FuviAI
