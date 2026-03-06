@@ -19,6 +19,7 @@ import {
   MousePointerClick,
   Target,
   Video,
+  Layers,
 } from "lucide-react";
 
 const NAV = [
@@ -31,6 +32,7 @@ const NAV = [
   { label: "Livestream Coach", href: "/livestream", icon: Radio },
   { label: "Analytics", href: "/analytics", icon: TrendingUp },
   { label: "Shopee E-commerce", href: "/shopee", icon: ShoppingBag },
+  { label: "Unified Ads", href: "/ads", icon: Layers },
   { label: "Google Ads", href: "/google-ads", icon: MousePointerClick },
   { label: "Facebook Ads", href: "/facebook-ads", icon: Target },
   { label: "TikTok Ads",   href: "/tiktok-ads",   icon: Video },

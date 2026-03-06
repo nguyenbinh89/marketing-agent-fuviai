@@ -396,6 +396,20 @@ export const api = {
   facebookAdsBenchmark: (industry: string = "saas") =>
     request<Record<string, unknown>>(`/api/ads/facebook/benchmark?industry=${industry}`),
 
+  // ─── Unified Ads ──────────────────────────────────────────────────────────
+  unifiedAdsSummary: (days: number = 30) =>
+    request<{
+      days: number;
+      platforms: Array<Record<string, unknown>>;
+      totals: Record<string, unknown>;
+      configured_count: number;
+    }>(`/api/ads/unified/summary?days=${days}`),
+
+  unifiedAdsBenchmarks: (industry: string = "saas") =>
+    request<{ industry: string; google: Record<string, unknown>; facebook: Record<string, unknown>; tiktok: Record<string, unknown> }>(
+      `/api/ads/unified/benchmarks?industry=${industry}`
+    ),
+
   // ─── TikTok Ads ───────────────────────────────────────────────────────────
   tiktokAdsCampaigns: (status: string = "CAMPAIGN_STATUS_ENABLE") =>
     request<{ status: string; count: number; campaigns: Array<Record<string, unknown>> }>(

@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from backend.config.settings import get_settings
-from backend.api.routes import agents, content, research, analytics, automation, commerce, customers, shopee, google_ads, facebook_ads, tiktok_ads
+from backend.api.routes import agents, content, research, analytics, automation, commerce, customers, shopee, google_ads, facebook_ads, tiktok_ads, ads_unified
 from backend.api.middleware import RateLimitMiddleware, RequestLoggingMiddleware
 from backend.monitoring import init_sentry, sentry_capture_exception
 
@@ -72,6 +72,7 @@ def create_app() -> FastAPI:
     app.include_router(google_ads.router,   prefix="/api/ads/google",   tags=["Google Ads"])
     app.include_router(facebook_ads.router, prefix="/api/ads/facebook", tags=["Facebook Ads"])
     app.include_router(tiktok_ads.router,   prefix="/api/ads/tiktok",   tags=["TikTok Ads"])
+    app.include_router(ads_unified.router,  prefix="/api/ads/unified",  tags=["Unified Ads"])
 
     # ─── Health & Meta ────────────────────────────────────────────────────────
     @app.get("/health", tags=["System"])
