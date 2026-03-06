@@ -10,6 +10,7 @@ from typing import Any
 from loguru import logger
 
 from backend.agents.base_agent import BaseAgent
+from backend.tools.google_ads_tool import GoogleAdsTool
 
 
 ADBUDGET_SYSTEM = """Bạn là Ad Budget Intelligence Specialist của FuviAI, chuyên dự báo và \
@@ -130,6 +131,7 @@ class AdBudgetAgent(BaseAgent):
             max_tokens=8096,
             temperature=0.2,
         )
+        self._google_ads = GoogleAdsTool()
 
     # ─── Seasonal Forecast ────────────────────────────────────────────────────
 
@@ -383,3 +385,103 @@ Dự báo:
     def get_season_calendar(self) -> dict[str, Any]:
         """Trả về lịch mùa vụ quảng cáo VN."""
         return SEASON_CALENDAR
+
+    # ─── Google Ads Integration ───────────────────────────────────────────────
+
+    def analyze_google_ads_performance(
+        self,
+        days_back: int = 30,
+        industry: str = "saas",
+    ) -> str:
+        """
+        Lấy dữ liệu Google Ads thực tế + Claude phân tích + đề xuất tối ưu.
+        Fallback về benchmark ngành VN nếu chưa cấu hình.
+
+        Args:
+            days_back: Số ngày muốn phân tích
+            industry: Ngành để so sánh benchmark
+        """
+        if self._google_ads.is_configured:
+            summary = self._google_ads.get_account_summary(days_back=days_back)
+            keywords = self._google_ads.get_keyword_performance(days_back=days_back, min_clicks=5)
+            data_source = "Google Ads API (data thực)"
+        else:
+            summary = {"note": "Google Ads chưa cấu hình — dùng benchmark ngành"}
+            keywords = []
+            data_source = "benchmark ngành VN 2026"
+
+        benchmark = self._google_ads.get_industry_benchmark(industry)
+
+        kw_str = ""
+        if keywords:
+            top_kw = keywords[:10]
+            kw_str = "\n**Top 10 từ khoá theo clicks:**\n" + "\n".join(
+                f"- {k['keyword']} | clicks: {k['clicks']} | CPC: {k['avg_cpc']:,.0f}đ | QS: {k['quality_score']}"
+                for k in top_kw
+            )
+
+        prompt = f"""Phân tích hiệu suất Google Ads và đề xuất tối ưu:
+
+**Nguồn dữ liệu:** {data_source}
+**Khoảng thời gian:** {days_back} ngày qua
+**Ngành:** {industry}
+
+**Dữ liệu account:**
+{json.dumps(summary, ensure_ascii=False, indent=2)}
+{kw_str}
+
+**Benchmark ngành {industry} VN 2026:**
+- CPC trung bình: {benchmark['cpc']:,}đ
+- ROAS trung bình: {benchmark['roas']}×
+- CTR trung bình: {benchmark['ctr']}%
+- Conversion rate: {benchmark['conversion_rate']}%
+
+Phân tích:
+1. **So sánh với benchmark ngành** — đang tốt hay kém hơn ở đâu?
+2. **Top 3 vấn đề cần cải thiện ngay** (quality score, bid strategy, từ khoá...)
+3. **Cơ hội tăng trưởng** — budget allocation, từ khoá mới, ad copy...
+4. **Action plan cụ thể** trong 30 ngày tới với budget hiện tại"""
+
+        logger.info(f"Google Ads performance analysis | days={days_back} | industry={industry}")
+        return self.chat(prompt, reset_history=True)
+
+    def optimize_google_ads_budget(
+        self,
+        total_monthly_budget: float,
+        campaign_ids: list[str] | None = None,
+    ) -> str:
+        """
+        Phân tích ROAS từng campaign và đề xuất phân bổ ngân sách tối ưu.
+
+        Args:
+            total_monthly_budget: Tổng ngân sách tháng (VNĐ)
+            campaign_ids: Danh sách campaign cần tối ưu (None = tất cả)
+        """
+        campaigns = self._google_ads.get_campaign_performance(days_back=30)
+        if campaign_ids:
+            campaigns = [c for c in campaigns if str(c["campaign_id"]) in campaign_ids]
+
+        if not campaigns:
+            campaigns_str = "Chưa có dữ liệu campaign (Google Ads chưa cấu hình hoặc chưa có lịch sử)"
+        else:
+            campaigns_str = json.dumps(campaigns, ensure_ascii=False, indent=2)
+
+        prompt = f"""Tối ưu phân bổ ngân sách Google Ads:
+
+**Tổng ngân sách tháng:** {total_monthly_budget:,.0f} VNĐ
+**Ngân sách ngày:** {total_monthly_budget/30:,.0f} VNĐ
+
+**Performance 30 ngày qua:**
+{campaigns_str}
+
+Đề xuất phân bổ ngân sách tối ưu:
+1. **Phân bổ theo campaign** (VNĐ/ngày + % tổng):
+   | Campaign | Budget/ngày | % | Lý do |
+2. **Campaign nên scale up** (ROAS cao, còn room tăng) và tại sao
+3. **Campaign nên cắt giảm hoặc dừng** và tại sao
+4. **Dự báo KPI** với phân bổ mới: clicks, conversions, ROAS tổng
+
+Chỉ đề xuất thay đổi có data support, không suy đoán."""
+
+        logger.info(f"Google Ads budget optimization | total={total_monthly_budget:,.0f}đ")
+        return self.chat(prompt, reset_history=True)

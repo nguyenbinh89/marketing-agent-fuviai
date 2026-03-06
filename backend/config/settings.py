@@ -44,6 +44,11 @@ class Settings(BaseSettings):
     shopee_access_token: str = Field(default="")
     shopee_shop_id: str = Field(default="")
     google_ads_developer_token: str = Field(default="")
+    google_ads_client_id: str = Field(default="")
+    google_ads_client_secret: str = Field(default="")
+    google_ads_refresh_token: str = Field(default="")
+    google_ads_customer_id: str = Field(default="")
+    google_ads_login_customer_id: str = Field(default="")
     google_cse_api_key: str = Field(default="", description="Google Custom Search API Key")
     google_cse_id: str = Field(default="", description="Google Custom Search Engine ID")
 
