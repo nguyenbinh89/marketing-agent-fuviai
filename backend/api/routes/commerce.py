@@ -600,6 +600,124 @@ async def upsell_recommendation(request: UpsellRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class SendPersonalizedEmailRequest(BaseModel):
+    customer: dict[str, Any]   # phải có "email" và "name"
+    segment: str = "potential"
+    product_context: str = "FuviAI Marketing Agent"
+    trigger: str = ""
+
+
+class SendAbandonedCartRequest(BaseModel):
+    customer_email: str
+    customer_name: str
+    cart_value: float
+    products: list[str]
+    segment: str = "potential"
+    steps: list[int] = [1]
+
+
+class SendBirthdayRequest(BaseModel):
+    customer_email: str
+    customer_name: str
+    tier: str = "loyal"
+    birthday_offer: str = ""
+
+
+class BulkSegmentEmailRequest(BaseModel):
+    customers: list[dict[str, Any]]  # mỗi customer cần có "email", "name", "clv_tier"
+    base_message: str
+    subject: str
+    segments: list[str] | None = None
+
+
+@router.post("/personalize/send-email")
+async def send_personalized_email(request: SendPersonalizedEmailRequest):
+    """Tạo nội dung AI + gửi email cá nhân hoá qua SendGrid ngay lập tức."""
+    if not request.customer.get("email"):
+        raise HTTPException(status_code=400, detail="customer.email là bắt buộc")
+    try:
+        agent = get_personalize_agent()
+        result = agent.send_personalized_email(
+            request.customer, request.segment,
+            request.product_context, request.trigger,
+        )
+        return {
+            "success": result.success,
+            "message_id": result.message_id,
+            "error": result.error,
+            "to": request.customer.get("email"),
+            "trigger": request.trigger or "nurture",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/personalize/send-abandoned-cart")
+async def send_abandoned_cart(request: SendAbandonedCartRequest):
+    """Tạo nội dung AI + gửi abandoned cart sequence qua SendGrid."""
+    if not request.products:
+        raise HTTPException(status_code=400, detail="products không được để trống")
+    if not request.steps or any(s not in [1, 2, 3] for s in request.steps):
+        raise HTTPException(status_code=400, detail="steps phải là list gồm 1, 2, 3")
+    try:
+        agent = get_personalize_agent()
+        results = agent.send_abandoned_cart_sequence(
+            request.customer_email, request.customer_name,
+            request.cart_value, request.products,
+            request.segment, request.steps,
+        )
+        return {
+            "to": request.customer_email,
+            "cart_value": request.cart_value,
+            "steps_sent": {k: {"success": v.success, "error": v.error} for k, v in results.items()},
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/personalize/send-birthday")
+async def send_birthday(request: SendBirthdayRequest):
+    """Tạo nội dung AI + gửi birthday email qua SendGrid."""
+    try:
+        agent = get_personalize_agent()
+        result = agent.send_birthday_campaign(
+            request.customer_email, request.customer_name,
+            request.tier, request.birthday_offer,
+        )
+        return {
+            "success": result.success,
+            "to": request.customer_email,
+            "error": result.error,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/personalize/send-bulk")
+async def send_bulk_segment_email(request: BulkSegmentEmailRequest):
+    """Tạo AI variants cho từng CLV segment + gửi bulk email qua SendGrid."""
+    if not request.customers:
+        raise HTTPException(status_code=400, detail="customers không được để trống")
+    if len(request.customers) > 500:
+        raise HTTPException(status_code=400, detail="Tối đa 500 customers mỗi lần")
+    if not request.base_message.strip():
+        raise HTTPException(status_code=400, detail="base_message không được để trống")
+    try:
+        agent = get_personalize_agent()
+        result = agent.send_bulk_segment_email(
+            request.customers, request.base_message,
+            request.subject, request.segments,
+        )
+        return {
+            "sent": result.sent,
+            "failed": result.failed,
+            "total": len(request.customers),
+            "errors": result.errors[:10],  # Giới hạn 10 errors trong response
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ═══════════════════════════════════════════════════════════════════════
 # COMPLIANCE ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════

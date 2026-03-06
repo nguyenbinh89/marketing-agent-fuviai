@@ -10,6 +10,7 @@ from typing import Any
 from loguru import logger
 
 from backend.agents.base_agent import BaseAgent
+from backend.tools.email_tool import EmailTool, EmailResult, BatchEmailResult
 
 
 PERSONALIZE_SYSTEM = """Bạn là Personalization Specialist của FuviAI, chuyên tạo trải nghiệm \
@@ -91,6 +92,7 @@ class PersonalizeAgent(BaseAgent):
             max_tokens=6000,
             temperature=0.5,
         )
+        self._email = EmailTool()
 
     # ─── Customer Segmentation ────────────────────────────────────────────────
 
@@ -432,3 +434,160 @@ Viết upsell message:
 Kênh: Email (150 chữ) — tone consultative."""
 
         return self.chat(prompt, reset_history=True)
+
+    # ─── Email Sending (SendGrid) ──────────────────────────────────────────────
+
+    def send_personalized_email(
+        self,
+        customer: dict[str, Any],
+        segment: str = "potential",
+        product_context: str = "FuviAI Marketing Agent",
+        trigger: str = "",
+    ) -> EmailResult:
+        """
+        Tạo nội dung bằng AI rồi gửi email cá nhân hoá ngay.
+
+        Args:
+            customer: {"name", "email", "total_spent", ...}
+            segment: CLV tier
+            trigger: "birthday" / "abandoned_cart" / "inactive_90d" / ...
+        """
+        to_email = customer.get("email", "")
+        if not to_email or not self._email.validate_email(to_email):
+            logger.warning(f"Invalid email | customer={customer.get('id', '?')}")
+            return EmailResult(success=False, error="Invalid or missing email address")
+
+        content = self.personalized_email(customer, segment, product_context, trigger)
+        to_name = customer.get("name", "")
+
+        # Extract subject line từ nội dung AI (dòng đầu có "Subject:")
+        subject = f"Tin tức từ FuviAI dành cho {to_name}"
+        for line in content.split("\n"):
+            stripped = line.strip()
+            if stripped.lower().startswith("subject:"):
+                subject = stripped.split(":", 1)[1].strip().strip("*")
+                # Dùng option A nếu có A/B (lấy trước dấu /)
+                if "/" in subject:
+                    subject = subject.split("/")[0].strip()
+                break
+
+        logger.info(f"Sending personalized email | to={to_email} | trigger={trigger or 'nurture'}")
+        return self._email.send_email(
+            to_email=to_email,
+            to_name=to_name,
+            subject=subject,
+            html_content=content,
+            categories=["personalized", segment, trigger or "nurture"],
+            custom_args={"trigger": trigger, "segment": segment},
+        )
+
+    def send_abandoned_cart_sequence(
+        self,
+        customer_email: str,
+        customer_name: str,
+        cart_value: float,
+        products: list[str],
+        segment: str = "potential",
+        steps: list[int] | None = None,
+    ) -> dict[str, EmailResult]:
+        """
+        Tạo nội dung AI rồi gửi sequence abandoned cart (1, 2 hoặc 3 bước).
+
+        Args:
+            steps: Danh sách bước cần gửi — [1], [2], [3] hoặc [1,2,3]
+                   Mặc định gửi bước 1 (gọi lại sau 24h để gửi bước 2, 3)
+        """
+        if steps is None:
+            steps = [1]
+
+        sequence = self.abandoned_cart_sequence(cart_value, products, customer_name, segment)
+        step_map = {
+            1: sequence.get("email_1_1h", ""),
+            2: sequence.get("email_2_24h", ""),
+            3: sequence.get("email_3_72h", ""),
+        }
+
+        results: dict[str, EmailResult] = {}
+        for step in steps:
+            content = step_map.get(step, "")
+            if not content:
+                results[f"step_{step}"] = EmailResult(success=False, error="Empty content")
+                continue
+            results[f"step_{step}"] = self._email.send_abandoned_cart(
+                to_email=customer_email,
+                to_name=customer_name,
+                email_content=content,
+                cart_value=cart_value,
+                step=step,
+            )
+        return results
+
+    def send_birthday_campaign(
+        self,
+        customer_email: str,
+        customer_name: str,
+        tier: str = "loyal",
+        birthday_offer: str = "",
+    ) -> EmailResult:
+        """Tạo nội dung AI rồi gửi birthday email."""
+        if not self._email.validate_email(customer_email):
+            return EmailResult(success=False, error="Invalid email address")
+
+        campaign = self.birthday_campaign(customer_name, tier, birthday_offer)
+        email_content = campaign.get("email", "")
+        if not email_content:
+            return EmailResult(success=False, error="AI returned empty email content")
+
+        return self._email.send_birthday(
+            to_email=customer_email,
+            to_name=customer_name,
+            email_content=email_content,
+        )
+
+    def send_bulk_segment_email(
+        self,
+        customers: list[dict[str, Any]],
+        base_message: str,
+        subject: str,
+        segments: list[str] | None = None,
+    ) -> BatchEmailResult:
+        """
+        Tạo content variants cho từng segment rồi gửi hàng loạt.
+
+        Args:
+            customers: [{"email", "name", "clv_tier", ...}, ...]
+            base_message: Nội dung gốc để AI tạo variants
+            subject: Tiêu đề email
+            segments: Segments cần tạo variant (mặc định: champion, loyal, potential, at_risk)
+        """
+        if segments is None:
+            segments = ["champion", "loyal", "potential", "at_risk"]
+
+        variants = self.create_segment_variants(base_message, segments, channel="email")
+
+        result = BatchEmailResult()
+        for c in customers:
+            email = c.get("email", "")
+            if not email or not self._email.validate_email(email):
+                result.failed += 1
+                result.errors.append(f"Invalid email: {email or 'missing'}")
+                continue
+
+            tier = c.get("clv_tier", "potential")
+            content = variants.get(tier, variants.get("potential", base_message))
+            res = self._email.send_email(
+                to_email=email,
+                to_name=c.get("name", ""),
+                subject=subject,
+                html_content=content,
+                categories=["bulk", tier],
+                custom_args={"segment": tier},
+            )
+            if res.success:
+                result.sent += 1
+            else:
+                result.failed += 1
+                result.errors.append(f"{email}: {res.error}")
+
+        logger.info(f"Bulk segment email | sent={result.sent} | failed={result.failed}")
+        return result

@@ -52,6 +52,11 @@ class Settings(BaseSettings):
     google_cse_api_key: str = Field(default="", description="Google Custom Search API Key")
     google_cse_id: str = Field(default="", description="Google Custom Search Engine ID")
 
+    # ─── Email (SendGrid) ───────────────────────────────────
+    sendgrid_api_key: str = Field(default="", description="SendGrid API Key")
+    sendgrid_from_email: str = Field(default="noreply@fuviai.com", description="Sender email (phải verify domain)")
+    sendgrid_from_name: str = Field(default="FuviAI Marketing", description="Sender display name")
+
     # ─── Monitoring ─────────────────────────────────────────
     sentry_dsn: str = Field(default="", description="Sentry DSN — để trống để tắt")
     sentry_traces_sample_rate: float = Field(default=0.1, description="0.0-1.0 — tỷ lệ trace performance")

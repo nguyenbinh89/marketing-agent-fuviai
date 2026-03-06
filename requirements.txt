@@ -44,6 +44,9 @@ pydantic>=2.10.0
 pydantic-settings>=2.7.0
 python-jose[cryptography]>=3.3.0
 
+# Email
+sendgrid>=6.11.0
+
 # Logging / Monitoring
 loguru>=0.7.3
 sentry-sdk[fastapi]>=2.19.0
