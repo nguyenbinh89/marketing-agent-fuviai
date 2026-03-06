@@ -177,7 +177,7 @@ function CompetitorPanel() {
   return (
     <div className="card p-5 space-y-4">
       <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-        <Plus size={16} className="text-rose-500" /> Counter-Strategy (< 30 giây)
+        <Plus size={16} className="text-rose-500" /> Counter-Strategy (&lt; 30 giây)
       </h3>
 
       <input className="input" placeholder="Tên đối thủ (VD: Haravan)" value={name} onChange={(e) => setName(e.target.value)} />

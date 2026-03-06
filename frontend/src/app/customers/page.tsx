@@ -143,7 +143,7 @@ export default function CustomersPage() {
     setSendResult(null);
     try {
       const res = await api.sendPersonalizedEmail(
-        full as Record<string, unknown>,
+        full as unknown as Record<string, unknown>,
         selectedCustomer.tier,
         "nurture",
       );
@@ -161,7 +161,7 @@ export default function CustomersPage() {
     setBulkResult(null);
     const enriched = segments.map((s) => {
       const full = customers.find((c) => c.customer_id === s.customer_id);
-      return { ...(full as Record<string, unknown>), clv_tier: s.tier };
+      return { ...(full as unknown as Record<string, unknown>), clv_tier: s.tier };
     });
     try {
       const res = await api.sendBulkEmail(enriched, bulkMsg, bulkSubject);
