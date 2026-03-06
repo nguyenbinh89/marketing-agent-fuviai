@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Search, TrendingUp, AlertTriangle, Plus, RefreshCw } from "lucide-react";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { SentimentDonut } from "@/components/Charts";
 
 // ─── Sentiment Panel ──────────────────────────────────────────────────────────
 
@@ -31,9 +32,6 @@ function SentimentPanel() {
     }
   };
 
-  const total = result?.summary.total || 1;
-  const pct = (n: number) => Math.round((n / total) * 100);
-
   return (
     <div className="card p-5 space-y-4">
       <h3 className="font-semibold text-slate-800 flex items-center gap-2">
@@ -51,29 +49,15 @@ function SentimentPanel() {
 
       {result && (
         <div className="space-y-3">
-          {/* Bar */}
-          <div className="flex rounded-full overflow-hidden h-5 text-xs font-medium">
-            {result.summary.positive > 0 && (
-              <div className="bg-green-500 flex items-center justify-center text-white" style={{ width: `${pct(result.summary.positive)}%` }}>
-                {pct(result.summary.positive)}%
-              </div>
-            )}
-            {result.summary.neutral > 0 && (
-              <div className="bg-slate-300 flex items-center justify-center text-white" style={{ width: `${pct(result.summary.neutral)}%` }}>
-                {pct(result.summary.neutral)}%
-              </div>
-            )}
-            {result.summary.negative > 0 && (
-              <div className="bg-red-500 flex items-center justify-center text-white" style={{ width: `${pct(result.summary.negative)}%` }}>
-                {pct(result.summary.negative)}%
-              </div>
-            )}
-          </div>
-          <div className="flex gap-4 text-xs text-slate-600">
-            <span className="text-green-600 font-medium">✅ Tích cực: {result.summary.positive}</span>
-            <span className="text-slate-500">⬜ Trung tính: {result.summary.neutral}</span>
-            <span className="text-red-500 font-medium">❌ Tiêu cực: {result.summary.negative}</span>
-          </div>
+          <SentimentDonut
+            data={{
+              positive: result.summary.positive,
+              negative: result.summary.negative,
+              neutral:  result.summary.neutral,
+            }}
+            title="Kết quả phân tích"
+            height={200}
+          />
 
           {result.top_negative.length > 0 && (
             <div className="bg-red-50 rounded-lg p-3">

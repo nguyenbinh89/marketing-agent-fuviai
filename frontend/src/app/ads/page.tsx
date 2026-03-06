@@ -8,6 +8,7 @@ import {
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { cn, formatVND } from "@/lib/utils";
+import { SpendPieChart, PlatformBarChart } from "@/components/Charts";
 
 type Tab = "overview" | "compare" | "benchmark" | "ai-allocate";
 
@@ -211,31 +212,17 @@ function OverviewTab() {
         })}
       </div>
 
-      {/* Spend breakdown bar */}
+      {/* Spend breakdown chart */}
       {configured.length > 1 && (
-        <div className="card p-5 space-y-3">
-          <p className="text-sm font-semibold text-slate-700">Phân bổ ngân sách theo platform</p>
-          <div className="flex h-8 rounded-lg overflow-hidden">
-            {configured.map((p) => (
-              <div
-                key={String(p.key)}
-                className={cn("flex items-center justify-center text-white text-xs font-medium transition-all", PLATFORM_COLORS[String(p.key)] || "bg-slate-400")}
-                style={{ width: `${Number(p.spend_pct || 0)}%`, minWidth: Number(p.spend_pct) > 5 ? undefined : "0px" }}
-                title={`${p.platform}: ${p.spend_pct}%`}
-              >
-                {Number(p.spend_pct) > 8 ? `${p.spend_pct}%` : ""}
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-4 flex-wrap">
-            {configured.map((p) => (
-              <div key={String(p.key)} className="flex items-center gap-1.5">
-                <div className={cn("w-2.5 h-2.5 rounded-full", PLATFORM_COLORS[String(p.key)] || "bg-slate-400")} />
-                <span className="text-xs text-slate-600">{String(p.platform)} — {p.spend_pct}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <SpendPieChart
+          data={configured.map((p) => ({
+            name: String(p.platform || ""),
+            value: Number(p.spend_vnd || 0),
+            pct: Number(p.spend_pct || 0),
+          }))}
+          title="Phân bổ ngân sách theo platform"
+          height={260}
+        />
       )}
     </div>
   );
@@ -358,6 +345,20 @@ function CompareTab() {
       <p className="text-xs text-slate-400 text-center">
         <span className="text-green-600 font-medium">best</span> = giá trị tốt nhất trong khoảng thời gian đã chọn
       </p>
+
+      {/* Bar chart comparison */}
+      {platforms.length > 1 && (
+        <PlatformBarChart
+          data={[
+            { metric: "CTR (%)",     ...Object.fromEntries(platforms.map((p) => [String(p.platform), Number(p.ctr || 0)])) },
+            { metric: "ROAS",        ...Object.fromEntries(platforms.map((p) => [String(p.platform), Number(p.roas || 0)])) },
+            { metric: "CPC (×1000)", ...Object.fromEntries(platforms.map((p) => [String(p.platform), Math.round(Number(p.cpc_vnd || 0) / 1000)])) },
+          ]}
+          platforms={platforms.map((p) => String(p.platform))}
+          title="So sánh CTR / ROAS / CPC theo platform"
+          height={240}
+        />
+      )}
     </div>
   );
 }

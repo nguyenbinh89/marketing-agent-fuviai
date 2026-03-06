@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import {
   MessageSquare, Pen, BarChart2, TrendingUp,
   AlertTriangle, CheckCircle, ArrowRight, Zap,
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { formatVND } from "@/lib/utils";
+import { SpendPieChart } from "@/components/Charts";
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 
@@ -49,6 +49,20 @@ function QuickAction({ href, icon: Icon, label, desc, color }: {
 export default function DashboardPage() {
   const [apiStatus, setApiStatus] = useState<"checking" | "ok" | "error">("checking");
   const [agentCount, setAgentCount] = useState(0);
+  const [adSpend, setAdSpend] = useState<Array<{ name: string; value: number }>>([]);
+
+  const loadAdSpend = useCallback(async () => {
+    try {
+      const res = await api.unifiedAdsSummary(30);
+      const configured = (res.platforms || []).filter((p: Record<string, unknown>) => p.configured && Number(p.spend_vnd) > 0);
+      setAdSpend(configured.map((p: Record<string, unknown>) => ({
+        name: String(p.platform),
+        value: Number(p.spend_vnd),
+      })));
+    } catch {
+      // No ads configured — hide chart
+    }
+  }, []);
 
   useEffect(() => {
     api.health()
@@ -57,7 +71,8 @@ export default function DashboardPage() {
         setAgentCount(data.agents);
       })
       .catch(() => setApiStatus("error"));
-  }, []);
+    loadAdSpend();
+  }, [loadAdSpend]);
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -94,6 +109,15 @@ export default function DashboardPage() {
         <KPICard label="ROAS TB" value="4.2×" sub="Benchmark FuviAI" color="text-amber-600" />
         <KPICard label="Uptime" value="99.5%" sub="Target SLA" color="text-blue-600" />
       </div>
+
+      {/* Ad Spend Chart */}
+      {adSpend.length > 0 && (
+        <SpendPieChart
+          data={adSpend}
+          title="Phân bổ ngân sách quảng cáo (30 ngày)"
+          height={240}
+        />
+      )}
 
       {/* Quick Actions */}
       <div>
