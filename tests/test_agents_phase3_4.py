@@ -605,3 +605,251 @@ class TestCompetitorAgentNews:
         agent._search.search_news.return_value = SearchResponse(query="Unknown")
         news = agent.search_competitor_news("Unknown Corp")
         assert news == []
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# EMAIL TOOL (SendGrid)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestEmailTool:
+    """Unit tests cho EmailTool — mock httpx và SendGrid settings."""
+
+    @pytest.fixture
+    def tool_disabled(self):
+        """EmailTool khi chưa cấu hình API key."""
+        with patch("backend.tools.email_tool.EmailTool.__init__", lambda self: None):
+            from backend.tools.email_tool import EmailTool
+            t = EmailTool.__new__(EmailTool)
+            t._api_key = ""
+            t._from_email = "noreply@fuviai.com"
+            t._from_name = "FuviAI Marketing"
+            t._enabled = False
+            return t
+
+    @pytest.fixture
+    def tool_enabled(self):
+        """EmailTool đã cấu hình API key."""
+        with patch("backend.tools.email_tool.EmailTool.__init__", lambda self: None):
+            from backend.tools.email_tool import EmailTool
+            t = EmailTool.__new__(EmailTool)
+            t._api_key = "SG.test_key"
+            t._from_email = "noreply@fuviai.com"
+            t._from_name = "FuviAI Marketing"
+            t._enabled = True
+            return t
+
+    def test_validate_email_valid(self, tool_disabled):
+        assert tool_disabled.validate_email("test@example.com") is True
+        assert tool_disabled.validate_email("nguyen.van.a@company.vn") is True
+
+    def test_validate_email_invalid(self, tool_disabled):
+        assert tool_disabled.validate_email("not-an-email") is False
+        assert tool_disabled.validate_email("@nodomain.com") is False
+        assert tool_disabled.validate_email("") is False
+
+    def test_send_disabled_returns_error(self, tool_disabled):
+        from backend.tools.email_tool import EmailResult
+        result = tool_disabled.send_email(
+            to_email="test@example.com",
+            subject="Test",
+            html_content="Hello",
+        )
+        assert result.success is False
+        assert "not configured" in result.error.lower()
+
+    def test_send_bulk_disabled_returns_batch_error(self, tool_disabled):
+        result = tool_disabled.send_bulk(
+            recipients=[{"email": "a@b.com", "name": "Test"}],
+            subject="Test",
+            html_content="Hello",
+        )
+        assert result.sent == 0
+        assert result.failed == 1
+
+    def test_wrap_html_plain_text(self, tool_disabled):
+        html = tool_disabled._wrap_html("Xin chào\n\nNội dung", "Subject")
+        assert "<p>" in html
+        assert "Xin chào" in html
+
+    def test_wrap_html_preserves_existing_html(self, tool_disabled):
+        raw = "<p>Already HTML</p>"
+        result = tool_disabled._wrap_html(raw, "Subject")
+        assert result == raw
+
+    def test_plain_from_html(self, tool_disabled):
+        html = "<p>Xin <b>chào</b></p>"
+        plain = tool_disabled._plain_from_html(html)
+        assert "<" not in plain
+        assert "Xin" in plain and "chào" in plain
+
+    def test_send_email_success(self, tool_enabled):
+        import httpx
+        mock_resp = MagicMock(spec=httpx.Response)
+        mock_resp.status_code = 202
+        mock_resp.content = b""
+        with patch("backend.tools.email_tool.httpx.post", return_value=mock_resp):
+            result = tool_enabled.send_email(
+                to_email="khach@example.com",
+                to_name="Khách Hàng",
+                subject="Ưu đãi đặc biệt",
+                html_content="<p>Nội dung email</p>",
+                categories=["test"],
+            )
+        assert result.success is True
+        assert result.status_code == 202
+
+    def test_send_email_failure(self, tool_enabled):
+        import httpx
+        mock_resp = MagicMock(spec=httpx.Response)
+        mock_resp.status_code = 401
+        mock_resp.content = b'{"errors": [{"message": "Unauthorized"}]}'
+        mock_resp.json.return_value = {"errors": [{"message": "Unauthorized"}]}
+        with patch("backend.tools.email_tool.httpx.post", return_value=mock_resp):
+            result = tool_enabled.send_email(
+                to_email="test@example.com",
+                subject="Test",
+                html_content="Hello",
+            )
+        assert result.success is False
+        assert result.status_code == 401
+
+    def test_send_bulk_partial_success(self, tool_enabled):
+        import httpx
+        mock_ok = MagicMock(spec=httpx.Response)
+        mock_ok.status_code = 202
+        mock_ok.content = b""
+        mock_fail = MagicMock(spec=httpx.Response)
+        mock_fail.status_code = 400
+        mock_fail.content = b'{"errors": []}'
+        mock_fail.json.return_value = {"errors": []}
+
+        responses = iter([mock_ok, mock_fail])
+        with patch("backend.tools.email_tool.httpx.post", side_effect=lambda *a, **kw: next(responses)):
+            result = tool_enabled.send_bulk(
+                recipients=[
+                    {"email": "ok@example.com", "name": "OK"},
+                    {"email": "fail@example.com", "name": "Fail"},
+                ],
+                subject="Bulk Test",
+                html_content="<p>Nội dung</p>",
+            )
+        assert result.sent == 1
+        assert result.failed == 1
+
+    def test_send_birthday(self, tool_enabled):
+        import httpx
+        mock_resp = MagicMock(spec=httpx.Response)
+        mock_resp.status_code = 202
+        mock_resp.content = b""
+        with patch("backend.tools.email_tool.httpx.post", return_value=mock_resp):
+            result = tool_enabled.send_birthday(
+                to_email="khach@example.com",
+                to_name="Nguyễn Văn A",
+                email_content="Chúc mừng sinh nhật!",
+            )
+        assert result.success is True
+
+    def test_send_abandoned_cart_step1(self, tool_enabled):
+        import httpx
+        mock_resp = MagicMock(spec=httpx.Response)
+        mock_resp.status_code = 202
+        mock_resp.content = b""
+        with patch("backend.tools.email_tool.httpx.post", return_value=mock_resp):
+            result = tool_enabled.send_abandoned_cart(
+                to_email="khach@example.com",
+                to_name="Test",
+                email_content="Bạn còn quên gì?",
+                cart_value=500_000,
+                step=1,
+            )
+        assert result.success is True
+
+    def test_timeout_returns_error(self, tool_enabled):
+        import httpx
+        with patch("backend.tools.email_tool.httpx.post", side_effect=httpx.TimeoutException("timeout")):
+            result = tool_enabled.send_email(
+                to_email="test@example.com",
+                subject="Test",
+                html_content="Hello",
+            )
+        assert result.success is False
+        assert result.status_code == 408
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# PERSONALIZE AGENT — send_* methods
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestPersonalizeAgentEmailSend:
+    @pytest.fixture
+    def agent(self, mock_anthropic):
+        with patch("backend.agents.personalize_agent.EmailTool") as mock_email_cls:
+            from backend.agents.personalize_agent import PersonalizeAgent
+            a = PersonalizeAgent()
+            mock_email = mock_email_cls.return_value
+            mock_email.validate_email.return_value = True
+            a._email = mock_email
+            yield a
+
+    def test_send_personalized_email_invalid_email(self, agent):
+        agent._email.validate_email.return_value = False
+        result = agent.send_personalized_email(
+            {"name": "Test", "email": "bad-email"},
+            segment="potential",
+        )
+        assert result.success is False
+        assert "Invalid" in result.error
+
+    def test_send_personalized_email_missing_email(self, agent):
+        result = agent.send_personalized_email(
+            {"name": "Test"},  # không có "email"
+            segment="potential",
+        )
+        assert result.success is False
+
+    def test_send_personalized_email_success(self, agent):
+        from backend.tools.email_tool import EmailResult
+        agent._email.send_email.return_value = EmailResult(success=True, status_code=202)
+        result = agent.send_personalized_email(
+            {"name": "Nguyễn Văn A", "email": "a@example.com", "total_spent": 5_000_000},
+            segment="loyal",
+            trigger="inactive_90d",
+        )
+        assert result.success is True
+        agent._email.send_email.assert_called_once()
+
+    def test_send_birthday_invalid_email(self, agent):
+        agent._email.validate_email.return_value = False
+        result = agent.send_birthday_campaign("bad@", "Test")
+        assert result.success is False
+
+    def test_send_birthday_success(self, agent):
+        from backend.tools.email_tool import EmailResult
+        agent._email.send_birthday.return_value = EmailResult(success=True, status_code=202)
+        result = agent.send_birthday_campaign(
+            "khach@example.com", "Nguyễn Văn A", tier="champion"
+        )
+        assert result.success is True
+
+    def test_send_abandoned_cart_sequence_step1(self, agent):
+        from backend.tools.email_tool import EmailResult
+        agent._email.send_abandoned_cart.return_value = EmailResult(success=True)
+        results = agent.send_abandoned_cart_sequence(
+            "khach@example.com", "Test", 1_000_000,
+            ["FuviAI Pro", "FuviAI Business"], steps=[1],
+        )
+        assert "step_1" in results
+        assert results["step_1"].success is True
+
+    def test_send_bulk_skips_invalid_emails(self, agent):
+        agent._email.validate_email.side_effect = lambda e: "@" in e and "." in e.split("@")[1]
+        agent._email.send_email.return_value = MagicMock(success=True)
+        result = agent.send_bulk_segment_email(
+            customers=[
+                {"email": "ok@example.com", "name": "OK", "clv_tier": "loyal"},
+                {"email": "bad-email", "name": "Bad"},
+            ],
+            base_message="Tin tức mới từ FuviAI",
+            subject="Cập nhật tháng 3",
+        )
+        assert result.failed >= 1

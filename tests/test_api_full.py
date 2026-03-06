@@ -383,6 +383,104 @@ class TestCommerceRoutes:
         r = client.get("/api/commerce/compliance/policies/facebook")
         assert r.status_code == 200
 
+    # Email sending endpoints
+    def test_send_email_missing_email_field(self, client):
+        r = client.post("/api/commerce/personalize/send-email", json={
+            "customer": {"name": "Test"},  # thiếu email
+            "segment": "loyal",
+        })
+        assert r.status_code == 400
+
+    @patch("backend.api.routes.commerce.get_personalize_agent")
+    def test_send_email_success(self, mock_get, client):
+        from backend.tools.email_tool import EmailResult
+        mock_agent = MagicMock()
+        mock_agent.send_personalized_email.return_value = EmailResult(success=True, status_code=202)
+        mock_get.return_value = mock_agent
+        r = client.post("/api/commerce/personalize/send-email", json={
+            "customer": {"name": "Nguyễn Văn A", "email": "test@example.com"},
+            "segment": "loyal",
+            "trigger": "inactive_90d",
+        })
+        assert r.status_code == 200
+        assert r.json()["success"] is True
+
+    def test_send_abandoned_cart_invalid_steps(self, client):
+        r = client.post("/api/commerce/personalize/send-abandoned-cart", json={
+            "customer_email": "test@example.com",
+            "customer_name": "Test",
+            "cart_value": 500000,
+            "products": ["FuviAI Pro"],
+            "steps": [4],  # step không hợp lệ
+        })
+        assert r.status_code == 400
+
+    def test_send_abandoned_cart_empty_products(self, client):
+        r = client.post("/api/commerce/personalize/send-abandoned-cart", json={
+            "customer_email": "test@example.com",
+            "customer_name": "Test",
+            "cart_value": 500000,
+            "products": [],
+            "steps": [1],
+        })
+        assert r.status_code == 400
+
+    @patch("backend.api.routes.commerce.get_personalize_agent")
+    def test_send_birthday_success(self, mock_get, client):
+        from backend.tools.email_tool import EmailResult
+        mock_agent = MagicMock()
+        mock_agent.send_birthday_campaign.return_value = EmailResult(success=True, status_code=202)
+        mock_get.return_value = mock_agent
+        r = client.post("/api/commerce/personalize/send-birthday", json={
+            "customer_email": "khach@example.com",
+            "customer_name": "Nguyễn Văn A",
+            "tier": "champion",
+        })
+        assert r.status_code == 200
+        assert r.json()["success"] is True
+
+    def test_send_bulk_empty_customers(self, client):
+        r = client.post("/api/commerce/personalize/send-bulk", json={
+            "customers": [],
+            "base_message": "Tin tức",
+            "subject": "Test",
+        })
+        assert r.status_code == 400
+
+    def test_send_bulk_too_many_customers(self, client):
+        r = client.post("/api/commerce/personalize/send-bulk", json={
+            "customers": [{"email": f"u{i}@ex.com"} for i in range(501)],
+            "base_message": "Tin tức",
+            "subject": "Test",
+        })
+        assert r.status_code == 400
+
+    def test_send_bulk_empty_message(self, client):
+        r = client.post("/api/commerce/personalize/send-bulk", json={
+            "customers": [{"email": "a@b.com", "name": "A"}],
+            "base_message": "   ",
+            "subject": "Test",
+        })
+        assert r.status_code == 400
+
+    @patch("backend.api.routes.commerce.get_personalize_agent")
+    def test_send_bulk_success(self, mock_get, client):
+        from backend.tools.email_tool import BatchEmailResult
+        mock_agent = MagicMock()
+        mock_agent.send_bulk_segment_email.return_value = BatchEmailResult(sent=2, failed=0)
+        mock_get.return_value = mock_agent
+        r = client.post("/api/commerce/personalize/send-bulk", json={
+            "customers": [
+                {"email": "a@ex.com", "name": "A", "clv_tier": "loyal"},
+                {"email": "b@ex.com", "name": "B", "clv_tier": "potential"},
+            ],
+            "base_message": "Khám phá tính năng mới của FuviAI",
+            "subject": "Cập nhật tháng 3/2026",
+        })
+        assert r.status_code == 200
+        assert r.json()["sent"] == 2
+        assert r.json()["failed"] == 0
+
     # Orchestrator
     def test_orchestrate_missing_fields(self, client):
         r = client.post("/api/commerce/orchestrate/campaign-plan", json={
