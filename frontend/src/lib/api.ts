@@ -297,6 +297,51 @@ export const api = {
       { method: "PATCH", body: JSON.stringify({ item_id: itemId, price }) }
     ),
 
+  // ─── Google Ads ───────────────────────────────────────────────────────────
+  googleAdsCampaigns: (status: string = "ENABLED") =>
+    request<{ status: string; count: number; campaigns: Array<Record<string, unknown>> }>(
+      `/api/ads/google/campaigns?status=${status}`
+    ),
+
+  googleAdsPerfSummary: (days: number = 30) =>
+    request<Record<string, unknown>>(`/api/ads/google/performance/summary?days=${days}`),
+
+  googleAdsPerfCampaigns: (days: number = 7) =>
+    request<{ days: number; count: number; rows: Array<Record<string, unknown>> }>(
+      `/api/ads/google/performance/campaigns?days=${days}`
+    ),
+
+  googleAdsPerfKeywords: (days: number = 30, minClicks: number = 0) =>
+    request<{ days: number; count: number; rows: Array<Record<string, unknown>> }>(
+      `/api/ads/google/performance/keywords?days=${days}&min_clicks=${minClicks}`
+    ),
+
+  googleAdsSearchTerms: (days: number = 30) =>
+    request<{ days: number; count: number; rows: Array<Record<string, unknown>> }>(
+      `/api/ads/google/performance/search-terms?days=${days}`
+    ),
+
+  googleAdsKeywordIdeas: (seedKeywords: string[], languageId?: string) =>
+    request<{ seed_keywords: string[]; count: number; ideas: Array<Record<string, unknown>> }>(
+      "/api/ads/google/keyword-ideas",
+      { method: "POST", body: JSON.stringify({ seed_keywords: seedKeywords, language_id: languageId || "1040" }) }
+    ),
+
+  googleAdsBenchmark: (industry: string = "saas") =>
+    request<Record<string, unknown>>(`/api/ads/google/benchmark?industry=${industry}`),
+
+  googleAdsUpdateBudget: (campaignBudgetId: string, dailyBudgetVnd: number) =>
+    request<{ updated: boolean; daily_budget_vnd: number }>(
+      "/api/ads/google/campaigns/budget",
+      { method: "PATCH", body: JSON.stringify({ campaign_budget_id: campaignBudgetId, daily_budget_vnd: dailyBudgetVnd }) }
+    ),
+
+  googleAdsUpdateStatus: (campaignId: string, status: "ENABLED" | "PAUSED") =>
+    request<{ campaign_id: string; new_status: string }>(
+      "/api/ads/google/campaigns/status",
+      { method: "PATCH", body: JSON.stringify({ campaign_id: campaignId, status }) }
+    ),
+
   // ─── Budget ───────────────────────────────────────────────────────────────
   getSeasonCalendar: () =>
     request<{ calendar: Record<string, unknown> }>("/api/commerce/budget/season-calendar"),
